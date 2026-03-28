@@ -1,0 +1,41 @@
+{
+  "name": "SolAgent Hub Orchestrator",
+  "description": "Agent-to-Agent orchestration layer on Solana. Discovers Metaplex-registered agents, routes A2A messages, and orchestrates multi-agent task flows with trustless SOL settlement via Asset Signer PDAs.",
+  "url": "https://solagent.hub",
+  "version": "1.0.0",
+  "protocol": "A2A",
+  "protocolVersion": "0.3.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "skills": [
+    {
+      "id": "agent-discovery",
+      "name": "Agent Discovery",
+      "description": "Discover and verify Metaplex-registered agents on Solana via on-chain PDA lookups and ERC-8004 metadata resolution.",
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "task-orchestration",
+      "name": "Task Orchestration",
+      "description": "Route tasks between agents, manage execution flows, and settle payments via Asset Signer wallets.",
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "risk-gating",
+      "name": "Risk Gating",
+      "description": "Coordinate risk checks between analyst, executor, and risk management agents before trade execution.",
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    }
+  ],
+  "authentication": {
+    "schemes": ["solana-wallet-signature"]
+  },
+  "defaultInputModes": ["application/json"],
+  "defaultOutputModes": ["application/json"]
+}

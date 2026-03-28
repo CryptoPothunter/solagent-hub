@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <radialGradient id="centerGlow" cx="50%" cy="45%" r="40%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.12"/><stop offset="100%" stop-color="#0a0b0f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="topLeftGlow" cx="15%" cy="20%" r="35%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.07"/><stop offset="100%" stop-color="#0a0b0f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.5"/><stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.4"/><stop offset="100%" stop-color="#00f0ff" stop-opacity="0.05"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="#0a0b0f"/>
+  <rect width="1200" height="630" fill="url(#centerGlow)"/>
+  <rect width="1200" height="630" fill="url(#topLeftGlow)"/>
+  <g opacity="0.04" stroke="#fff" stroke-width="0.5">
+    <line x1="0" y1="0" x2="0" y2="630"/><line x1="60" y1="0" x2="60" y2="630"/><line x1="120" y1="0" x2="120" y2="630"/><line x1="180" y1="0" x2="180" y2="630"/><line x1="240" y1="0" x2="240" y2="630"/><line x1="300" y1="0" x2="300" y2="630"/><line x1="360" y1="0" x2="360" y2="630"/><line x1="420" y1="0" x2="420" y2="630"/><line x1="480" y1="0" x2="480" y2="630"/><line x1="540" y1="0" x2="540" y2="630"/><line x1="600" y1="0" x2="600" y2="630"/><line x1="660" y1="0" x2="660" y2="630"/><line x1="720" y1="0" x2="720" y2="630"/><line x1="780" y1="0" x2="780" y2="630"/><line x1="840" y1="0" x2="840" y2="630"/><line x1="900" y1="0" x2="900" y2="630"/><line x1="960" y1="0" x2="960" y2="630"/><line x1="1020" y1="0" x2="1020" y2="630"/><line x1="1080" y1="0" x2="1080" y2="630"/><line x1="1140" y1="0" x2="1140" y2="630"/>
+    <line x1="0" y1="60" x2="1200" y2="60"/><line x1="0" y1="120" x2="1200" y2="120"/><line x1="0" y1="180" x2="1200" y2="180"/><line x1="0" y1="240" x2="1200" y2="240"/><line x1="0" y1="300" x2="1200" y2="300"/><line x1="0" y1="360" x2="1200" y2="360"/><line x1="0" y1="420" x2="1200" y2="420"/><line x1="0" y1="480" x2="1200" y2="480"/><line x1="0" y1="540" x2="1200" y2="540"/><line x1="0" y1="600" x2="1200" y2="600"/>
+  </g>
+  <g fill="none" stroke-width="1.2">
+    <line x1="120" y1="180" x2="240" y2="260" stroke="url(#lg1)"/><line x1="120" y1="180" x2="180" y2="380" stroke="url(#lg2)"/><line x1="240" y1="260" x2="180" y2="380" stroke="url(#lg1)"/><line x1="240" y1="260" x2="360" y2="200" stroke="url(#lg2)"/><line x1="360" y1="200" x2="340" y2="350" stroke="url(#lg1)"/><line x1="180" y1="380" x2="340" y2="350" stroke="url(#lg2)"/>
+    <line x1="860" y1="200" x2="980" y2="170" stroke="url(#lg2)"/><line x1="980" y1="170" x2="1060" y2="290" stroke="url(#lg1)"/><line x1="860" y1="200" x2="1060" y2="290" stroke="url(#lg2)"/><line x1="860" y1="200" x2="900" y2="370" stroke="url(#lg1)"/><line x1="1060" y1="290" x2="900" y2="370" stroke="url(#lg2)"/><line x1="1060" y1="290" x2="1100" y2="410" stroke="url(#lg1)"/><line x1="900" y1="370" x2="1100" y2="410" stroke="url(#lg2)"/>
+    <line x1="340" y1="350" x2="860" y2="200" stroke="#8b5cf6" stroke-width="0.6" opacity="0.08" stroke-dasharray="6 8"/>
+  </g>
+  <g filter="url(#glow)">
+    <circle cx="120" cy="180" r="6" fill="#00f0ff" opacity="0.8"/><circle cx="240" cy="260" r="8" fill="#00f0ff" opacity="0.9"/><circle cx="180" cy="380" r="5" fill="#8b5cf6" opacity="0.7"/><circle cx="360" cy="200" r="7" fill="#8b5cf6" opacity="0.8"/><circle cx="340" cy="350" r="5.5" fill="#00f0ff" opacity="0.6"/>
+    <circle cx="860" cy="200" r="7" fill="#8b5cf6" opacity="0.8"/><circle cx="980" cy="170" r="5.5" fill="#00f0ff" opacity="0.7"/><circle cx="1060" cy="290" r="8" fill="#00f0ff" opacity="0.9"/><circle cx="900" cy="370" r="6" fill="#8b5cf6" opacity="0.7"/><circle cx="1100" cy="410" r="5" fill="#8b5cf6" opacity="0.6"/>
+  </g>
+  <circle cx="240" cy="260" r="16" fill="none" stroke="#00f0ff" stroke-width="0.8" opacity="0.25"/>
+  <circle cx="1060" cy="290" r="16" fill="none" stroke="#00f0ff" stroke-width="0.8" opacity="0.25"/>
+  <rect x="0" y="0" width="1200" height="3" fill="url(#accentGrad)"/>
+  <text x="600" y="270" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="72" fill="#fff" letter-spacing="-1">SolAgent Hub</text>
+  <rect x="400" y="290" width="400" height="2.5" rx="1.25" fill="url(#accentGrad)" opacity="0.6"/>
+  <text x="600" y="340" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="400" font-size="28" fill="#a0aec0" letter-spacing="0.5">Agent-to-Agent Orchestration on Solana</text>
+  <text x="600" y="390" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="500" font-size="16" fill="#00f0ff" opacity="0.8" letter-spacing="1">Powered by Metaplex Agent Registry</text>
+  <g transform="translate(600,540)">
+    <rect x="-310" y="-18" width="180" height="36" rx="18" fill="#fff" fill-opacity="0.05" stroke="#00f0ff" stroke-width="0.8" stroke-opacity="0.3"/>
+    <text x="-220" y="6" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="600" font-size="14" fill="#00f0ff" opacity="0.9" letter-spacing="0.8">A2A Protocol</text>
+    <circle cx="-105" cy="0" r="2.5" fill="#8b5cf6" opacity="0.5"/>
+    <rect x="-90" y="-18" width="180" height="36" rx="18" fill="#fff" fill-opacity="0.05" stroke="url(#accentGrad)" stroke-width="0.8" stroke-opacity="0.3"/>
+    <text x="0" y="6" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="600" font-size="14" fill="#fff" opacity="0.8" letter-spacing="0.8">MCP Tools</text>
+    <circle cx="105" cy="0" r="2.5" fill="#8b5cf6" opacity="0.5"/>
+    <rect x="120" y="-18" width="200" height="36" rx="18" fill="#fff" fill-opacity="0.05" stroke="#8b5cf6" stroke-width="0.8" stroke-opacity="0.3"/>
+    <text x="220" y="6" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="600" font-size="14" fill="#8b5cf6" opacity="0.9" letter-spacing="0.8">On-Chain Identity</text>
+  </g>
+  <rect x="0" y="627" width="1200" height="3" fill="url(#accentGrad)"/>
+</svg>
