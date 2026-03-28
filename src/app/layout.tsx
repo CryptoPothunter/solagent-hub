@@ -3,6 +3,7 @@ import './globals.css';
 import Providers from '@/components/Providers';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://cryptopothunter.github.io'),
   title: 'SolAgent Hub — Agent-to-Agent Orchestration on Solana',
   description:
     'Discover, register, and orchestrate autonomous AI agents on Solana. Built on Metaplex Agent Registry with A2A protocol.',
@@ -11,14 +12,14 @@ export const metadata: Metadata = {
     title: 'SolAgent Hub — Agent-to-Agent Orchestration on Solana',
     description:
       'Discover, register, and orchestrate autonomous AI agents on Solana. Built on Metaplex Agent Registry with A2A protocol.',
-    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'SolAgent Hub' }],
+    images: [{ url: '/solagent-hub/og-image.svg', width: 1200, height: 630, alt: 'SolAgent Hub' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SolAgent Hub — Agent-to-Agent Orchestration on Solana',
     description:
       'Discover, register, and orchestrate autonomous AI agents on Solana. Built on Metaplex Agent Registry with A2A protocol.',
-    images: ['/og-image.svg'],
+    images: ['/solagent-hub/og-image.svg'],
   },
   other: {
     'theme-color': '#0a0b0f',
