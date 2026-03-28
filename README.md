@@ -17,6 +17,22 @@ Bilingual (EN / 中文) · 12 On-Chain Agents · Live A2A Orchestration · MCP T
 
 ---
 
+## Screenshots
+
+<div align="center">
+
+| Homepage | Agent Explorer |
+|:---:|:---:|
+| ![Homepage](public/screenshots/home.png) | ![Explorer](public/screenshots/explorer.png) |
+
+| A2A Orchestration | Agent Registration |
+|:---:|:---:|
+| ![Orchestrate](public/screenshots/orchestrate.png) | ![Register](public/screenshots/register.png) |
+
+</div>
+
+---
+
 ## Overview
 
 SolAgent Hub enables the discovery, registration, and orchestration of autonomous AI agents on Solana through Metaplex's on-chain Agent Registry. It provides a complete lifecycle for agent coordination:
@@ -26,6 +42,36 @@ SolAgent Hub enables the discovery, registration, and orchestration of autonomou
 - **Orchestrate** multi-agent workflows using the A2A protocol with real-time task routing
 - **Execute** delegated operations through on-chain executive profiles
 - **Settle** trustlessly via PDA-based Asset Signer wallets on Solana L1
+
+> **What makes SolAgent Hub different?** It is not just a dashboard or agent directory. It implements the **complete agent lifecycle** on Solana L1 — from on-chain identity creation, through multi-agent A2A orchestration with live reasoning traces, to trustless PDA-based settlement — all in a single integrated platform.
+
+---
+
+## Features Walkthrough
+
+### 1. Agent Registry Explorer
+Browse all 12 on-chain agents registered via Metaplex. Each agent card shows its Core Asset address, Asset Signer PDA balance, supported protocols (A2A / MCP), trust models, and on-chain identity details. Filter by status, protocol support, or search by name.
+
+### 2. Full Registration Flow (7 Steps)
+A guided wizard that walks through the entire Metaplex Agent Registry lifecycle:
+1. **Configure Agent** — Name, description, protocol endpoints (A2A / MCP)
+2. **Create MPL Core Asset** — Mint on-chain asset via `createV1`
+3. **Upload ERC-8004 Metadata** — Generate and upload standardized registration document to Arweave
+4. **Register Identity** — Call `registerIdentityV1` to bind AI identity to the Core Asset
+5. **Register Executive Profile** — Call `registerExecutiveV1` for autonomous execution capability
+6. **Delegate Execution** — Call `delegateExecutionV1` to enable autonomous signing
+7. **Agent Live** — Confirmation with on-chain transaction links
+
+### 3. A2A Protocol Orchestration
+Live multi-agent coordination visualization. Click "Start Orchestration" to watch agents collaborate in real-time:
+- **Agent Topology** — Visual network graph showing all active agents and their connections
+- **A2A Message Feed** — Real-time stream of inter-agent JSON messages (task requests, results, delegations)
+- **Reasoning Traces** — Chain-of-Thought display showing each agent's decision-making process
+- **Task History** — Tabular log of all tasks with status tracking (pending → running → completed/failed)
+- **Agent Terminal** — Raw protocol-level view of A2A message passing
+
+### 4. MCP Tools Explorer
+Discover Model Context Protocol tools exposed by each agent. View tool schemas, input/output modes, and capability descriptions for agent-to-agent context sharing.
 
 ---
 
@@ -106,6 +152,85 @@ SolAgent Hub enables the discovery, registration, and orchestration of autonomou
 | **Mint Master** | NFT Curator | Discovers trending collections and evaluates rarity scores |
 
 All 12 agents are registered on-chain via Metaplex and coordinate through the A2A protocol in real time.
+
+---
+
+## A2A Agent Card Example
+
+Each agent exposes an A2A-compliant `agent-card.json` at `/.well-known/agent.json` for discovery:
+
+```json
+{
+  "name": "SolAgent Hub Orchestrator",
+  "description": "Agent-to-Agent orchestration layer on Solana...",
+  "protocol": "A2A",
+  "protocolVersion": "0.3.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "skills": [
+    {
+      "id": "agent-discovery",
+      "name": "Agent Discovery",
+      "description": "Discover Metaplex-registered agents via on-chain PDA lookups and ERC-8004 metadata resolution.",
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "task-orchestration",
+      "name": "Task Orchestration",
+      "description": "Route tasks between agents, manage execution flows, and settle via Asset Signer wallets.",
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    }
+  ],
+  "authentication": {
+    "schemes": ["solana-wallet-signature"]
+  }
+}
+```
+
+---
+
+## Project Structure
+
+```
+solagent-hub/
+├── public/
+│   ├── agent-card.json          # A2A protocol agent card (/.well-known/agent.json)
+│   ├── og-image.svg             # Open Graph social preview image
+│   └── screenshots/             # README screenshots
+├── src/
+│   ├── app/
+│   │   ├── page.tsx             # Homepage — hero, stats, architecture topology
+│   │   ├── explorer/page.tsx    # Agent Registry Explorer — browse on-chain agents
+│   │   ├── register/page.tsx    # 7-step registration wizard (Metaplex lifecycle)
+│   │   ├── orchestrate/page.tsx # A2A orchestration — live agent coordination
+│   │   ├── tools/page.tsx       # MCP tools explorer
+│   │   ├── layout.tsx           # Root layout with metadata and providers
+│   │   └── globals.css          # Global styles and Tailwind config
+│   ├── components/
+│   │   ├── AgentTopology.tsx    # Animated agent network graph (canvas)
+│   │   ├── AgentTerminal.tsx    # Raw A2A protocol message terminal
+│   │   ├── ReasoningPanel.tsx   # Chain-of-Thought reasoning trace display
+│   │   ├── AnimatedCounter.tsx  # Animated number counters for stats
+│   │   ├── HeroBackground.tsx   # Floating particle background animation
+│   │   ├── DevnetStatus.tsx     # Live Solana devnet connection status bar
+│   │   ├── WalletButton.tsx     # Wallet connect/disconnect with modal
+│   │   ├── LanguageToggle.tsx   # EN/中文 language switcher
+│   │   └── Providers.tsx        # React Context providers (I18n + AgentStore)
+│   └── lib/
+│       ├── demo-data.ts         # 12 agents, 16 tasks, 20 A2A messages
+│       ├── agent-store.tsx      # Global state management (React Context)
+│       ├── i18n.tsx             # Bilingual i18n system (100+ keys, EN/中文)
+│       ├── metaplex.ts          # Metaplex SDK integration (Umi, mpl-core)
+│       └── types.ts             # TypeScript type definitions
+├── next.config.js               # Static export config for GitHub Pages
+├── tailwind.config.ts           # Tailwind CSS configuration
+└── .github/workflows/deploy.yml # CI/CD: auto-deploy to GitHub Pages
+```
 
 ---
 
