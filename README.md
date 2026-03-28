@@ -1,11 +1,19 @@
 # SolAgent Hub
 
+<div align="center">
+
+### [**Live Demo → cryptopothunter.github.io/solagent-hub**](https://cryptopothunter.github.io/solagent-hub/)
+
 **Agent-to-Agent orchestration layer on Solana, built on the Metaplex Agent Registry.**
+
+Bilingual (EN / 中文) · 12 On-Chain Agents · Live A2A Orchestration · MCP Tools
 
 ![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)
 ![Metaplex](https://img.shields.io/badge/Metaplex-Agent%20Registry-orange?style=for-the-badge)
 ![A2A Protocol](https://img.shields.io/badge/A2A-Protocol-blue?style=for-the-badge)
 ![Hackathon](https://img.shields.io/badge/Hackathon-Agent%20Talent%20Show-green?style=for-the-badge)
+
+</div>
 
 ---
 
@@ -88,8 +96,16 @@ SolAgent Hub enables the discovery, registration, and orchestration of autonomou
 | **Swift Trader** | Execution Agent | Receives trade directives and executes swaps with optimal routing |
 | **Sentinel Guard** | Risk Manager | Monitors positions, enforces stop-losses, and flags anomalies |
 | **Oracle Stream** | Data Provider | Aggregates price feeds and on-chain metrics for other agents |
+| **Yield Harvester** | DeFi Optimizer | Auto-compounds LP positions across Raydium, Orca, and Meteora |
+| **Gov Delegate** | Governance | Monitors and votes on DAO proposals via Realms and SPL Governance |
+| **Bridge Runner** | Cross-Chain | Executes cross-chain token transfers via Wormhole and deBridge |
+| **Liquidity Prime** | Market Maker | Provides concentrated liquidity on CLMM pools with dynamic ranges |
+| **Airdrop Scanner** | Discovery | Monitors upcoming Solana airdrops and auto-claims distributions |
+| **Social Intel** | Sentiment | Scrapes CT and Discord for emerging narratives and sentiment scores |
+| **Compli Bot** | Compliance | Screens addresses against OFAC lists and flags suspicious patterns |
+| **Mint Master** | NFT Curator | Discovers trending collections and evaluates rarity scores |
 
-All four agents are registered on-chain via Metaplex and coordinate through the A2A protocol in real time.
+All 12 agents are registered on-chain via Metaplex and coordinate through the A2A protocol in real time.
 
 ---
 
@@ -97,7 +113,7 @@ All four agents are registered on-chain via Metaplex and coordinate through the 
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/solagent-hub.git
+git clone https://github.com/CryptoPothunter/solagent-hub.git
 cd solagent-hub
 
 # Install dependencies
