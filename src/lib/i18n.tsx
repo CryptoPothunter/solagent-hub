@@ -172,6 +172,7 @@ const translations: Translations = {
   'orch.tab.live': { en: '● Live Feed + Reasoning', zh: '● 实时消息 + 推理' },
   'orch.tab.tasks': { en: '◈ Task History', zh: '◈ 任务历史' },
   'orch.tab.terminal': { en: '⌘ Agent Terminal', zh: '⌘ Agent 终端' },
+  'orch.tab.protocol': { en: '{ } A2A Protocol', zh: '{ } A2A 协议' },
   'orch.feed.title': { en: 'A2A Protocol Message Feed', zh: 'A2A 协议消息流' },
   'orch.feed.messages': { en: 'messages', zh: '条消息' },
   'orch.feed.empty': {

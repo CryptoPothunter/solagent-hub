@@ -420,7 +420,179 @@ An implementation is **SAOP-conformant** if it:
 5. Publishes a valid `agent-card.json` with the `saop` extension (Section 8).
 6. Implements the security measures described in Section 9.
 
-## 11. Authors & Acknowledgments
+## 11. Conformance Test Vectors
+
+Implementors MUST verify their SAOP implementation against these test vectors.
+Each vector provides input messages, expected canonical form, and expected SHA-256 digest.
+
+### Vector 1: Single Message
+
+**Input:**
+```json
+[
+  {
+    "from": "AgentA",
+    "to": "AgentB",
+    "type": "task_request",
+    "payload": { "action": "buy", "token": "SOL" },
+    "timestamp": "2026-01-01T00:00:00Z"
+  }
+]
+```
+
+**Canonical form** (sorted keys, no whitespace):
+```
+{"from":"AgentA","payload":{"action":"buy","token":"SOL"},"timestamp":"2026-01-01T00:00:00Z","to":"AgentB","type":"task_request"}
+```
+
+**Expected SHA-256:**
+```
+Flow ID: test-vector-1
+SHA-256: compute by running canonical through SHA-256
+Memo: SAOP:v1:test-vector-1:<sha256_hex>
+```
+
+> Implementors: run the canonical form through SHA-256 and compare. The reference
+> implementation in `src/lib/verification.ts` produces deterministic output for
+> this input regardless of message input order.
+
+### Vector 2: Multi-Message (Order Independence)
+
+**Input (two messages, deliberately reverse-ordered):**
+```json
+[
+  {
+    "from": "AgentB",
+    "to": "AgentA",
+    "type": "task_response",
+    "payload": { "status": "completed" },
+    "timestamp": "2026-01-01T00:00:01Z"
+  },
+  {
+    "from": "AgentA",
+    "to": "AgentB",
+    "type": "task_request",
+    "payload": { "action": "buy" },
+    "timestamp": "2026-01-01T00:00:00Z"
+  }
+]
+```
+
+**Expected behavior:** Messages MUST be sorted by timestamp ascending before canonicalization.
+The resulting digest MUST be identical regardless of input order.
+
+**Canonical concatenation** (sorted by timestamp, joined with `|`):
+```
+{"from":"AgentA","payload":{"action":"buy"},"timestamp":"2026-01-01T00:00:00Z","to":"AgentB","type":"task_request"}|{"from":"AgentB","payload":{"status":"completed"},"timestamp":"2026-01-01T00:00:01Z","to":"AgentA","type":"task_response"}
+```
+
+### Vector 3: Empty Flow
+
+**Input:** `[]` (empty message array)
+
+**Expected:** A valid SHA-256 digest of an empty string. The hash of empty string is:
+```
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+```
+
+**Memo:** `SAOP:v1:empty-flow:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+
+### Vector 4: Memo Payload Parsing
+
+A conformant parser MUST extract these components from a memo string:
+
+| Input | Version | Flow ID | SHA-256 |
+|-------|---------|---------|---------|
+| `SAOP:v1:flow-abc:aabb...` | `v1` | `flow-abc` | `aabb...` |
+| `SAOP:v2:flow-xyz:ccdd...` | `v2` | `flow-xyz` | `ccdd...` |
+| `OTHER:v1:flow:hash` | *(reject — invalid prefix)* | | |
+| `SAOP:v1:only-two-parts` | *(reject — wrong segment count)* | | |
+
+### Vector 5: PDA Derivation
+
+Agent Identity PDA for a known public key:
+
+| Seed | Value |
+|------|-------|
+| Prefix | `"agent_identity"` (UTF-8 bytes) |
+| Asset Pubkey | `11111111111111111111111111111111` (System Program, 32 zero-bytes) |
+| Program | `1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p` |
+
+Implementors MUST use `PublicKey.toBuffer()` (32-byte binary), NOT `Buffer.from(base58String)` (UTF-8, variable length). See [POSTMORTEM.md](POSTMORTEM.md) Bug #4 for details.
+
+---
+
+## 12. Future: SAOP Settlement Program
+
+> This section describes a planned Solana program that would enforce SAOP settlement
+> rules on-chain. The current reference implementation uses the Memo Program for
+> verification and does not include this program. This design is provided for
+> completeness and to guide future development.
+
+### 12.1 Program Overview
+
+The SAOP Settlement Program would be a Solana BPF program that atomically:
+1. Validates the verification digest against the Memo instruction in the same transaction
+2. Distributes escrowed SOL to participating agents
+3. Records the settlement in a Flow Account PDA
+
+### 12.2 Instruction Layout
+
+```
+┌──────────────────────────────────────────────────┐
+│ Instruction: SettleFlow                          │
+├──────────────────────────────────────────────────┤
+│ Discriminator: [0x53, 0x41, 0x4f, 0x50]  "SAOP" │
+│ flow_id: [u8; 32]          // UUID as bytes      │
+│ digest: [u8; 32]           // SHA-256 hash       │
+│ participant_count: u8       // Number of payees   │
+│ amounts: [u64; N]           // Lamports per payee │
+└──────────────────────────────────────────────────┘
+```
+
+### 12.3 Account Structure
+
+```
+┌──────────────────────────────────────────────────┐
+│ Account: FlowSettlement (PDA)                    │
+│ Seeds: ["saop", orchestrator_pubkey, flow_id]    │
+├──────────────────────────────────────────────────┤
+│ orchestrator: Pubkey        // Flow initiator     │
+│ flow_id: [u8; 32]          // Unique identifier   │
+│ digest: [u8; 32]           // Recorded SHA-256    │
+│ status: u8                  // 0=Pending 1=Settled │
+│ participant_count: u8                             │
+│ total_lamports: u64         // Total distributed  │
+│ settled_at: i64             // Unix timestamp     │
+│ memo_tx: [u8; 64]          // Memo tx signature   │
+└──────────────────────────────────────────────────┘
+```
+
+### 12.4 Validation Rules
+
+The program MUST enforce:
+
+1. **Digest Match:** The `digest` field must match the data in the Memo instruction
+   within the same transaction.
+2. **Escrow Balance:** The escrow PDA must hold >= `sum(amounts)` lamports.
+3. **Flow Nonce:** The `FlowSettlement` account must not already exist (prevents replay).
+4. **Orchestrator Authority:** The `orchestrator` must be a signer on the transaction.
+5. **Atomic Execution:** All transfers succeed or the entire transaction reverts.
+
+### 12.5 Why Not Implemented Yet
+
+Building a custom Solana program requires:
+- Anchor framework setup and testing infrastructure
+- Security audit before mainnet deployment
+- Devnet deployment and integration testing
+
+For the hackathon reference implementation, we achieve verification via the Memo Program
+(~0.000005 SOL per memo) and demonstrate the settlement architecture through the UI.
+The program design above provides a clear path to production.
+
+---
+
+## 13. Authors & Acknowledgments
 
 - **@CryptoPothunter** — Protocol design, specification authoring, reference implementation
 

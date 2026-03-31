@@ -164,7 +164,7 @@ export default function OrchestratePage() {
   const [currentIdx, setCurrentIdx] = useState(-1);
   const logRef = useRef<HTMLDivElement>(null);
   const scriptRef = useRef<ScenarioStep[]>(buildScenarioScript());
-  const [tab, setTab] = useState<'live' | 'tasks' | 'terminal'>('live');
+  const [tab, setTab] = useState<'live' | 'tasks' | 'terminal' | 'protocol'>('live');
   const [taskCount, setTaskCount] = useState(0);
   const [solSettled, setSolSettled] = useState(0);
   const [showSettlementFloat, setShowSettlementFloat] = useState(false);
@@ -369,6 +369,7 @@ export default function OrchestratePage() {
             { id: 'live' as const, labelKey: 'orch.tab.live' },
             { id: 'tasks' as const, labelKey: 'orch.tab.tasks' },
             { id: 'terminal' as const, labelKey: 'orch.tab.terminal' },
+            { id: 'protocol' as const, labelKey: 'orch.tab.protocol' },
           ]).map(({ id: tabId, labelKey }) => (
             <button key={tabId} onClick={() => setTab(tabId)}
               className={`px-4 py-2 rounded-lg text-xs font-mono transition-all ${
@@ -462,6 +463,111 @@ export default function OrchestratePage() {
 
         {tab === 'terminal' && (
           <AgentTerminal customAgents={store.agents.slice(5).map(a => ({ name: a.metadata.name, description: a.metadata.description }))} />
+        )}
+
+        {tab === 'protocol' && (
+          <div className="space-y-4">
+            {/* Transparency Notice */}
+            <div className="rounded-xl bg-[#181924] border border-[#2a2d3e] p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
+                <span className="text-xs font-semibold text-[#f59e0b]">Reference Implementation Notice</span>
+              </div>
+              <p className="text-[11px] text-[#9ca3af] leading-relaxed">
+                Messages follow the <a href="https://google.github.io/A2A/" target="_blank" rel="noopener noreferrer" className="text-[#00f0ff] hover:underline">Google A2A Protocol</a> specification format.
+                In this reference implementation, messages are locally simulated to demonstrate the orchestration flow.
+                In a production deployment, these would be HTTP POST requests between agent endpoints with cryptographic signatures.
+              </p>
+            </div>
+
+            {/* A2A Message Schema */}
+            <div className="rounded-xl bg-[#0d0e14] border border-[#2a2d3e] p-5">
+              <h4 className="text-sm font-semibold text-white mb-3">A2A Message Schema</h4>
+              <div className="bg-[#0a0b0f] rounded-lg border border-[#2a2d3e] p-4 overflow-x-auto">
+                <pre className="text-[11px] font-mono text-[#9ca3af] leading-relaxed whitespace-pre">{`// A2A Protocol Message (Google A2A v0.3.0)
+interface A2AMessage {
+  id: string;                    // Unique message identifier
+  from: string;                  // Sender agent name/ID
+  to: string;                    // Recipient agent name/ID
+  type: "task_request"           // Request a task execution
+      | "task_response"          // Return task result
+      | "discovery"              // Agent capability announcement
+      | "heartbeat";             // Health/status ping
+  payload: Record<string, any>;  // Task-specific data
+  timestamp: string;             // ISO 8601 timestamp
+}
+
+// SAOP Extension: Verification Digest
+interface SAOPDigest {
+  flowId: string;                // Unique orchestration flow ID
+  messageCount: number;          // Total messages in flow
+  sha256Hex: string;             // SHA-256 of canonical messages
+  memoPayload: string;           // "SAOP:v1:<flowId>:<sha256>"
+}
+
+// Memo Program Instruction (Solana)
+// Program: MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr
+// Data: UTF-8 encoded memoPayload string`}</pre>
+              </div>
+            </div>
+
+            {/* Raw Messages from Current Flow */}
+            {messages.length > 0 && (
+              <div className="rounded-xl bg-[#0d0e14] border border-[#2a2d3e] p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-white">Raw A2A Messages ({messages.length})</h4>
+                  <button
+                    onClick={() => {
+                      const raw = messages.map(m => ({
+                        id: m.message.id,
+                        from: m.message.from,
+                        to: m.message.to,
+                        type: m.message.type,
+                        payload: m.message.payload,
+                        timestamp: m.message.timestamp,
+                      }));
+                      navigator.clipboard.writeText(JSON.stringify(raw, null, 2));
+                    }}
+                    className="text-[10px] font-mono px-2 py-1 rounded bg-[#181924] border border-[#2a2d3e] text-[#6b7280] hover:text-white hover:border-[#00f0ff]/30 transition-all"
+                  >
+                    Copy All JSON
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                  {messages.map((item, i) => (
+                    <div key={i} className="bg-[#0a0b0f] rounded-lg border border-[#2a2d3e] p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] font-mono text-[#6b7280]">#{i + 1}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                          item.message.type === 'task_request' ? 'bg-[#00f0ff]/10 text-[#00f0ff]' :
+                          item.message.type === 'task_response' ? 'bg-[#22c55e]/10 text-[#22c55e]' :
+                          item.message.type === 'heartbeat' ? 'bg-[#f59e0b]/10 text-[#f59e0b]' :
+                          'bg-[#8b5cf6]/10 text-[#8b5cf6]'
+                        }`}>
+                          {item.message.type}
+                        </span>
+                        <span className="text-[10px] font-mono text-[#6b7280]">{item.message.timestamp}</span>
+                      </div>
+                      <pre className="text-[10px] font-mono text-[#9ca3af] leading-relaxed whitespace-pre overflow-x-auto">{JSON.stringify({
+                        id: item.message.id,
+                        from: item.message.from,
+                        to: item.message.to,
+                        type: item.message.type,
+                        payload: item.message.payload,
+                        timestamp: item.message.timestamp,
+                      }, null, 2)}</pre>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {messages.length === 0 && (
+              <div className="text-center py-12 text-[#6b7280] text-sm">
+                Run the orchestration scenario to see raw A2A protocol messages here
+              </div>
+            )}
+          </div>
         )}
 
         {/* SAOP Verification Digest Panel */}

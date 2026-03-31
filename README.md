@@ -220,7 +220,7 @@ A guided wizard implementing the complete Metaplex Agent Registry lifecycle:
 
 ## Demo Agents
 
-All 12 agents are registered on-chain via Metaplex and coordinate through A2A in real time.
+12 demo agents showcase the range of autonomous agent capabilities. Agent data is locally simulated for the reference implementation — in production, each would be registered on-chain via Metaplex and discovered through A2A protocol.
 
 | Agent | Role | Specialty |
 |-------|------|-----------|
@@ -280,6 +280,60 @@ The Metaplex Umi SDK depends on `Buffer` — a Node.js global absent in browser 
 | #2 Agent Card 404 | ~2h | Static hosting vs. A2A spec |
 | #3 Hydration mismatch | ~1h | SSR/client state divergence |
 | #4 PDA seed encoding | ~2h | Byte encoding mismatch |
+
+---
+
+## Verify Our Claims
+
+We believe hackathon entries should be independently verifiable. Here's how to verify everything we claim:
+
+### 1. SAOP Verification Digest
+
+After running the orchestration demo with a connected wallet:
+- Click "Submit Verification to Solana" to write the SHA-256 digest to Devnet
+- The resulting transaction signature links directly to [Solana Explorer](https://explorer.solana.com/?cluster=devnet)
+- The Memo instruction data contains `SAOP:v1:<flow_id>:<sha256_hex>`
+- **To verify:** Recompute the digest from the message log using the algorithm in [SAOP-SPEC.md](SAOP-SPEC.md) Section 11 (Conformance Test Vectors) and compare to the on-chain memo
+
+### 2. Metaplex Agent Registry Query
+
+The Explorer page queries Devnet in real-time:
+- Program ID: [`1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p`](https://explorer.solana.com/address/1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p?cluster=devnet)
+- The status banner shows the actual count of on-chain accounts
+- Demo agents are clearly labeled as demo data
+
+### 3. Jupiter Integration
+
+- Open browser DevTools Network tab while running orchestration
+- Observe real HTTP requests to `api.jup.ag/price/v2` and `quote-api.jup.ag/v6/quote`
+- The Jupiter route displayed in the verification panel is from a real quote response
+
+### 4. PDA Derivation
+
+Every PDA shown in the registration flow is derived using `PublicKey.findProgramAddressSync` with correct seeds:
+- Agent Identity: `["agent_identity", asset_pubkey.toBuffer()]`
+- Asset Signer: `["asset_signer", asset_pubkey.toBuffer()]`
+- Executive Profile: `["executive_profile", authority.toBuffer()]`
+
+Verify by running: `PublicKey.findProgramAddressSync([Buffer.from("agent_identity"), new PublicKey("<asset>").toBuffer()], new PublicKey("1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p"))`
+
+### 5. What We Honestly Simulate
+
+We believe in transparency about what is real and what is demo:
+
+| Component | Status | Detail |
+|-----------|--------|--------|
+| Jupiter prices | **Real** | Live API calls to api.jup.ag |
+| Jupiter swap route | **Real** | Live quote from quote-api.jup.ag |
+| Wallet connection | **Real** | Phantom/Solflare/Coinbase via adapter |
+| Memo tx submission | **Real** | Signed and confirmed on Solana Devnet |
+| On-chain verification | **Real** | Fetches and compares memo from Devnet |
+| Agent Registry query | **Real** | getProgramAccounts on Devnet |
+| PDA derivation | **Real** | PublicKey.findProgramAddressSync |
+| 12 demo agents | **Simulated** | Hardcoded data, not registered on-chain |
+| Orchestration messages | **Simulated** | Local setTimeout animation, not HTTP |
+| SOL settlement amounts | **Simulated** | Displayed values, no real transfers |
+| Registration steps 2-7 | **Simulated** | Demo mode with realistic PDA outputs |
 
 ---
 
