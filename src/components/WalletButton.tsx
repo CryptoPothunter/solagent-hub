@@ -1,22 +1,9 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useI18n } from '@/lib/i18n';
-
-const FAKE_ADDRESS = '7xK3dR8Nv2qLm5Wp4TgYs6JbCe1FhUo9mPq';
-const FAKE_BALANCE = '2.847';
-const TRUNCATED = '7xK3...9mPq';
-
-interface WalletInfo {
-  name: string;
-  color: string;
-  icon: string;
-}
-
-const WALLETS: WalletInfo[] = [
-  { name: 'Phantom', color: '#ab9ff2', icon: '👻' },
-  { name: 'Solflare', color: '#fc8c03', icon: '🔥' },
-  { name: 'Backpack', color: '#e33e3f', icon: '🎒' },
-];
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 interface WalletButtonProps {
   onConnect?: (address: string) => void;
@@ -24,13 +11,46 @@ interface WalletButtonProps {
 
 export default function WalletButton({ onConnect }: WalletButtonProps) {
   const { t } = useI18n();
-  const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(false);
-  const [connectingWallet, setConnectingWallet] = useState<string | null>(null);
+  const { connection } = useConnection();
+  const wallet = useWallet();
+
+  const [balance, setBalance] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [connectingName, setConnectingName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const address = wallet.publicKey?.toBase58() ?? null;
+  const truncated = address
+    ? `${address.slice(0, 4)}...${address.slice(-4)}`
+    : '';
+
+  // Fetch balance when connected
+  useEffect(() => {
+    if (!wallet.publicKey || !connection) {
+      setBalance(null);
+      return;
+    }
+    let cancelled = false;
+    connection.getBalance(wallet.publicKey).then((lamports) => {
+      if (!cancelled) {
+        setBalance((lamports / LAMPORTS_PER_SOL).toFixed(3));
+      }
+    }).catch(() => {
+      if (!cancelled) setBalance(null);
+    });
+    return () => { cancelled = true; };
+  }, [wallet.publicKey, connection]);
+
+  // Notify parent on connect
+  useEffect(() => {
+    if (wallet.connected && address) {
+      setShowModal(false);
+      setConnectingName(null);
+      onConnect?.(address);
+    }
+  }, [wallet.connected, address, onConnect]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -57,30 +77,64 @@ export default function WalletButton({ onConnect }: WalletButtonProps) {
     return () => document.removeEventListener('keydown', handleKey);
   }, []);
 
-  const handleSelectWallet = useCallback(async (wallet: WalletInfo) => {
-    setConnecting(true);
-    setConnectingWallet(wallet.name);
-    await new Promise((r) => setTimeout(r, 1500));
-    setConnecting(false);
-    setConnectingWallet(null);
-    setShowModal(false);
-    setConnected(true);
-    onConnect?.(FAKE_ADDRESS);
-  }, [onConnect]);
+  const handleSelectWallet = useCallback(
+    async (adapter: typeof wallet.wallets[number]) => {
+      try {
+        setConnectingName(adapter.adapter.name);
+        wallet.select(adapter.adapter.name);
+        // connect() is handled by autoConnect or we call it explicitly
+        if (adapter.readyState === 'Installed') {
+          await wallet.connect();
+        }
+      } catch {
+        // User rejected or wallet not found — just reset
+        setConnectingName(null);
+      }
+    },
+    [wallet]
+  );
 
-  const handleDisconnect = useCallback(() => {
-    setConnected(false);
+  const handleDisconnect = useCallback(async () => {
+    try {
+      await wallet.disconnect();
+    } catch {
+      // ignore
+    }
     setShowDropdown(false);
-  }, []);
+  }, [wallet]);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(FAKE_ADDRESS).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }, []);
+    if (address) {
+      navigator.clipboard.writeText(address).catch(() => {});
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  }, [address]);
+
+  // Map wallet readyState to a user-friendly color/icon
+  function walletMeta(w: typeof wallet.wallets[number]) {
+    const colors: Record<string, string> = {
+      Phantom: '#ab9ff2',
+      Solflare: '#fc8c03',
+      Coinbase: '#0052ff',
+    };
+    const icons: Record<string, string> = {
+      Phantom: '\u{1F47B}',   // ghost
+      Solflare: '\u{1F525}',  // fire
+      Coinbase: '\u{1F4B0}',  // money bag
+    };
+    const name = w.adapter.name;
+    return {
+      color: colors[name] ?? '#8b5cf6',
+      icon: icons[name] ?? '\u{1F4B0}',
+    };
+  }
+
+  // Available wallets to show in the modal
+  const availableWallets = wallet.wallets;
 
   // --- Connected state button ---
-  if (connected) {
+  if (wallet.connected && address) {
     return (
       <div className="relative" ref={dropdownRef}>
         <button
@@ -88,8 +142,10 @@ export default function WalletButton({ onConnect }: WalletButtonProps) {
           className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#181924] border border-[#2a2d3e] hover:border-[#00f0ff]/40 transition-all text-sm"
         >
           <span className="w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-          <span className="font-mono text-[#e4e4e7] text-xs">{TRUNCATED}</span>
-          <span className="text-[#6b7280] text-[10px] font-mono">{FAKE_BALANCE} SOL</span>
+          <span className="font-mono text-[#e4e4e7] text-xs">{truncated}</span>
+          <span className="text-[#6b7280] text-[10px] font-mono">
+            {balance !== null ? `${balance} SOL` : '... SOL'}
+          </span>
           <svg
             className={`w-3 h-3 text-[#6b7280] transition-transform ${showDropdown ? 'rotate-180' : ''}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
@@ -105,16 +161,16 @@ export default function WalletButton({ onConnect }: WalletButtonProps) {
               onClick={handleCopy}
               className="w-full flex items-center gap-3 px-4 py-3 text-xs text-[#e4e4e7] hover:bg-[#1e2030] transition-colors"
             >
-              <span className="text-sm">{copied ? '✓' : '📋'}</span>
+              <span className="text-sm">{copied ? '\u2713' : '\u{1F4CB}'}</span>
               {copied ? t('wallet.copied') : t('wallet.copy')}
             </button>
             <a
-              href={`https://explorer.solana.com/address/${FAKE_ADDRESS}?cluster=devnet`}
+              href={`https://explorer.solana.com/address/${address}?cluster=devnet`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full flex items-center gap-3 px-4 py-3 text-xs text-[#e4e4e7] hover:bg-[#1e2030] transition-colors"
             >
-              <span className="text-sm">🔗</span>
+              <span className="text-sm">{'\u{1F517}'}</span>
               {t('wallet.viewExplorer')}
             </a>
             <div className="border-t border-[#2a2d3e]" />
@@ -122,7 +178,7 @@ export default function WalletButton({ onConnect }: WalletButtonProps) {
               onClick={handleDisconnect}
               className="w-full flex items-center gap-3 px-4 py-3 text-xs text-[#ef4444] hover:bg-[#1e2030] transition-colors"
             >
-              <span className="text-sm">⏏</span>
+              <span className="text-sm">{'\u23CF'}</span>
               {t('wallet.disconnect')}
             </button>
           </div>
@@ -161,7 +217,7 @@ export default function WalletButton({ onConnect }: WalletButtonProps) {
                 onClick={() => setShowModal(false)}
                 className="text-[#6b7280] hover:text-white transition-colors text-lg leading-none"
               >
-                ✕
+                {'\u2715'}
               </button>
             </div>
             <p className="px-6 text-xs text-[#6b7280] -mt-2 mb-4">
@@ -170,29 +226,57 @@ export default function WalletButton({ onConnect }: WalletButtonProps) {
 
             {/* Wallet options */}
             <div className="px-4 pb-6 space-y-2">
-              {WALLETS.map((wallet) => {
-                const isConnecting = connecting && connectingWallet === wallet.name;
+              {availableWallets.length === 0 && (
+                <p className="text-xs text-[#6b7280] text-center py-4">
+                  No wallet extensions detected. Please install Phantom, Solflare, or Coinbase Wallet.
+                </p>
+              )}
+              {availableWallets.map((w) => {
+                const meta = walletMeta(w);
+                const isConnecting =
+                  (wallet.connecting || connectingName === w.adapter.name) &&
+                  connectingName === w.adapter.name;
+                const notInstalled = w.readyState !== 'Installed';
                 return (
                   <button
-                    key={wallet.name}
-                    onClick={() => !connecting && handleSelectWallet(wallet)}
-                    disabled={connecting && connectingWallet !== wallet.name}
+                    key={w.adapter.name}
+                    onClick={() =>
+                      !wallet.connecting && handleSelectWallet(w)
+                    }
+                    disabled={wallet.connecting && connectingName !== w.adapter.name}
                     className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border border-[#2a2d3e] bg-[#0a0b0f] hover:border-[color:var(--wc)] hover:shadow-[0_0_16px_var(--wg)] transition-all disabled:opacity-40"
                     style={
                       {
-                        '--wc': wallet.color + '60',
-                        '--wg': wallet.color + '15',
+                        '--wc': meta.color + '60',
+                        '--wg': meta.color + '15',
                       } as React.CSSProperties
                     }
                   >
-                    <span className="text-xl">{wallet.icon}</span>
-                    <span className="flex-1 text-left text-sm font-medium text-[#e4e4e7]">{wallet.name}</span>
+                    {w.adapter.icon ? (
+                      <img
+                        src={w.adapter.icon}
+                        alt={w.adapter.name}
+                        className="w-6 h-6 rounded"
+                      />
+                    ) : (
+                      <span className="text-xl">{meta.icon}</span>
+                    )}
+                    <span className="flex-1 text-left text-sm font-medium text-[#e4e4e7]">
+                      {w.adapter.name}
+                      {notInstalled && (
+                        <span className="ml-2 text-[10px] text-[#6b7280] font-normal">
+                          (not installed)
+                        </span>
+                      )}
+                    </span>
                     {isConnecting ? (
-                      <span className="text-xs text-[#00f0ff] font-mono animate-pulse">{t('wallet.connecting')}</span>
+                      <span className="text-xs text-[#00f0ff] font-mono animate-pulse">
+                        {t('wallet.connecting')}
+                      </span>
                     ) : (
                       <span
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: wallet.color }}
+                        style={{ backgroundColor: meta.color }}
                       />
                     )}
                   </button>

@@ -106,6 +106,15 @@ export default function Home() {
             <p className="text-lg text-[#9ca3af] max-w-2xl mb-10 leading-relaxed">
               {t('home.subtitle')}
             </p>
+            <a
+              href="https://github.com/solagent-hub/solagent-hub/blob/main/SAOP-SPEC.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-[#2a2d3e] text-xs font-mono text-[#9ca3af] hover:border-[#00f0ff]/50 hover:text-[#00f0ff] transition-all"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6]" />
+              {t('home.saop.badge')}
+            </a>
             <div className="flex gap-4">
               <Link href="/explorer"
                 className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#00f0ff] to-[#00a8b3] text-black font-semibold hover:shadow-[0_0_30px_rgba(0,240,255,0.3)] transition-all">
@@ -129,7 +138,7 @@ export default function Home() {
                     {mounted ? (
                       <AnimatedCounter value={stat.value} suffix={stat.suffix} duration={stat.duration} />
                     ) : (
-                      <span className="font-mono">0{stat.suffix && <span className="text-sm text-[#9ca3af] ml-1">{stat.suffix}</span>}</span>
+                      <span className="font-mono">{typeof stat.value === 'number' && stat.value % 1 !== 0 ? stat.value.toFixed(1) : stat.value}{stat.suffix && <span className="text-sm text-[#9ca3af] ml-1">{stat.suffix}</span>}</span>
                     )}
                   </div>
                   <div className="text-xs text-[#6b7280] mt-1">{stat.label}</div>
@@ -188,6 +197,12 @@ export default function Home() {
               <div className="relative z-10">
                 <div className="text-xs font-mono text-[#22c55e] font-semibold mb-2">{t('home.arch.a2a.title')}</div>
                 <div className="text-[11px] text-[#9ca3af] leading-relaxed">{t('home.arch.a2a.desc')}</div>
+              </div>
+            </div>
+            <div className="gradient-border p-4 md:col-span-3">
+              <div className="relative z-10">
+                <div className="text-xs font-mono text-[#f59e0b] font-semibold mb-2">{t('home.arch.saop.title')}</div>
+                <div className="text-[11px] text-[#9ca3af] leading-relaxed">{t('home.arch.saop.desc')}</div>
               </div>
             </div>
           </div>

@@ -57,6 +57,15 @@ const translations: Translations = {
     en: 'Built for Solana Agent Economy Hackathon — #AgentTalentShow — Metaplex Agents Track',
     zh: '为 Solana Agent Economy Hackathon 而构建 — #AgentTalentShow — Metaplex Agents Track',
   },
+  'home.saop.badge': {
+    en: 'SAOP v0.1.0 — Solana Agent Orchestration Protocol',
+    zh: 'SAOP v0.1.0 — Solana Agent 编排协议',
+  },
+  'home.arch.saop.title': { en: 'SAOP Verification', zh: 'SAOP 验证' },
+  'home.arch.saop.desc': {
+    en: 'SHA-256 flow digest → Solana Memo Program → On-chain auditability',
+    zh: 'SHA-256 流摘要 → Solana Memo Program → 链上可审计性',
+  },
   'home.devnet': { en: 'DEVNET', zh: 'DEVNET' },
 
   // --- Explorer page ---
