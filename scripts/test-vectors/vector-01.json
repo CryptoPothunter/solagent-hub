@@ -1,0 +1,21 @@
+{
+  "description": "Simple 2-message flow: Oracle broadcasts price, Scout acknowledges",
+  "flowId": "test-vector-01",
+  "messages": [
+    {
+      "from": "Oracle Stream",
+      "to": "Alpha Scout",
+      "type": "task_response",
+      "payload": { "feed": "SOL/USDC", "price": 187.23 },
+      "timestamp": "2025-01-15T10:00:00Z"
+    },
+    {
+      "from": "Alpha Scout",
+      "to": "Swift Trader",
+      "type": "task_request",
+      "payload": { "action": "BUY", "token": "SOL", "amount": 1.5 },
+      "timestamp": "2025-01-15T10:00:01Z"
+    }
+  ],
+  "expectedDigest": "SAOP:v1:test-vector-01:6268cdcb77d0bdc0d1dccbc887804f8b3cbd0d53a28a5e009681d82c412ebc24"
+}

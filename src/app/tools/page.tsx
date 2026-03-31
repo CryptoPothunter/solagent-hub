@@ -4,7 +4,7 @@ import { useState } from 'react';
 import WalletButton from '@/components/WalletButton';
 import { useI18n } from '@/lib/i18n';
 import LanguageToggle from '@/components/LanguageToggle';
-import { getJupiterPrices, TOKEN_MINTS } from '@/lib/jupiter';
+import { getJupiterPrices, getJupiterQuote, formatQuoteSummary, TOKEN_MINTS } from '@/lib/jupiter';
 
 interface ToolParam {
   name: string;
@@ -361,6 +361,119 @@ function LivePriceTool() {
   );
 }
 
+function LiveQuoteTool() {
+  const tokenKeys = Object.keys(TOKEN_MINTS);
+  const [fromToken, setFromToken] = useState('USDC');
+  const [toToken, setToToken] = useState('SOL');
+  const [amount, setAmount] = useState(100);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const getBaseUnits = (symbol: string, amt: number): number => {
+    const upper = symbol.toUpperCase();
+    if (upper === 'SOL') return Math.round(amt * 1e9);
+    if (upper === 'USDC' || upper === 'USDT') return Math.round(amt * 1e6);
+    if (upper === 'BONK') return Math.round(amt * 1e5);
+    return Math.round(amt * 1e6);
+  };
+
+  const fetchQuote = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const baseAmount = getBaseUnits(fromToken, amount);
+      const quote = await getJupiterQuote({
+        inputSymbol: fromToken,
+        outputSymbol: toToken,
+        amount: baseAmount,
+      });
+      if (quote) {
+        const routePath = quote.routePlan.map((r: { swapInfo: { label: string } }) => r.swapInfo.label).join(' -> ');
+        const summary = formatQuoteSummary(quote, fromToken, toToken);
+        setResult(JSON.stringify({
+          summary,
+          route: routePath,
+          inputAmount: quote.inAmount,
+          outputAmount: quote.outAmount,
+          priceImpact: parseFloat(quote.priceImpactPct).toFixed(4) + '%',
+          hops: quote.routePlan.length,
+          source: 'Jupiter Quote API v6',
+          timestamp: new Date().toISOString(),
+        }, null, 2));
+      } else {
+        setError(`No route found for ${fromToken} -> ${toToken}`);
+      }
+    } catch (e) {
+      setError(String(e));
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="rounded-xl border-2 border-[#22c55e]/30 bg-gradient-to-r from-[#22c55e]/5 to-transparent p-5 mb-8">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+        <span className="text-xs font-mono font-semibold text-[#22c55e]">LIVE MCP TOOL — Real Jupiter Quote API</span>
+      </div>
+      <p className="text-xs text-[#9ca3af] mb-4">
+        This tool calls the real Jupiter Quote API v6 and returns swap routes with price impact. Try it below.
+      </p>
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] font-mono text-[#6b7280] uppercase">From</label>
+          <select
+            value={fromToken}
+            onChange={e => setFromToken(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-sm text-white font-mono focus:outline-none focus:border-[#22c55e]/50"
+          >
+            {tokenKeys.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] font-mono text-[#6b7280] uppercase">To</label>
+          <select
+            value={toToken}
+            onChange={e => setToToken(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-sm text-white font-mono focus:outline-none focus:border-[#22c55e]/50"
+          >
+            {tokenKeys.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] font-mono text-[#6b7280] uppercase">Amount</label>
+          <input
+            type="number"
+            value={amount}
+            onChange={e => setAmount(Number(e.target.value))}
+            className="px-3 py-2 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-sm text-white font-mono w-28 focus:outline-none focus:border-[#22c55e]/50"
+          />
+        </div>
+        <button
+          onClick={fetchQuote}
+          disabled={loading}
+          className="px-4 py-2 rounded-lg bg-[#22c55e]/20 text-[#22c55e] text-sm font-mono border border-[#22c55e]/30 hover:bg-[#22c55e]/30 disabled:opacity-40 transition-all"
+        >
+          {loading ? 'Fetching...' : 'get_route ->'}
+        </button>
+      </div>
+      {result && (
+        <div className="bg-[#0a0b0f] rounded-lg border border-[#2a2d3e] p-3">
+          <pre className="text-[11px] font-mono text-[#22c55e] whitespace-pre">{result}</pre>
+        </div>
+      )}
+      {error && (
+        <div className="text-xs text-[#ef4444] font-mono">{error}</div>
+      )}
+    </div>
+  );
+}
+
 export default function ToolsPage() {
   const { t } = useI18n();
   return (
@@ -393,6 +506,7 @@ export default function ToolsPage() {
 
         {/* Live Tool */}
         <LivePriceTool />
+        <LiveQuoteTool />
 
         {/* Agent Sections */}
         <div className="space-y-12">

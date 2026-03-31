@@ -10,6 +10,7 @@ import AgentTopology from '@/components/AgentTopology';
 import ReasoningPanel from '@/components/ReasoningPanel';
 import AgentTerminal from '@/components/AgentTerminal';
 import { useAgentStore } from '@/lib/agent-store';
+import { registerA2AWorker, sendA2ATask, getA2ATaskStatus, fetchAgentCard } from '@/lib/a2a-client';
 import { getJupiterPrices, getJupiterQuote, formatQuoteSummary } from '@/lib/jupiter';
 import { computeFlowDigest, buildVerificationTransaction, verifyOnChainDigest, type VerificationDigest } from '@/lib/verification';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -176,6 +177,8 @@ export default function OrchestratePage() {
   const [memoTxError, setMemoTxError] = useState<string | null>(null);
   const [onChainVerified, setOnChainVerified] = useState<boolean | null>(null);
   const [jupiterRoute, setJupiterRoute] = useState<string | null>(null);
+  const [a2aReady, setA2aReady] = useState(false);
+  const [a2aTaskIds, setA2aTaskIds] = useState<string[]>([]);
 
   const submitMemoTx = async () => {
     if (!verificationDigest || !publicKey) return;
@@ -203,6 +206,10 @@ export default function OrchestratePage() {
       setMemoTxError(err instanceof Error ? err.message : 'Transaction failed');
     }
   };
+
+  useEffect(() => {
+    registerA2AWorker().then(ok => setA2aReady(ok));
+  }, []);
 
   const startScenario = async () => {
     let realPrice: number | undefined;
@@ -270,6 +277,20 @@ export default function OrchestratePage() {
       const item = script[currentIdx];
       const ts = new Date().toISOString().slice(11, 19);
       setMessages(prev => [...prev, { ...item, message: { ...item.message, timestamp: ts } }]);
+
+      // Send real A2A HTTP request via ServiceWorker (visible in Network tab)
+      if (a2aReady) {
+        sendA2ATask({
+          from: item.message.from,
+          to: item.message.to,
+          type: item.message.type,
+          payload: item.message.payload as Record<string, unknown>,
+        }).then(result => {
+          if (result?.taskId) {
+            setA2aTaskIds(prev => [...prev, result.taskId]);
+          }
+        });
+      }
 
       // Update active topology connections
       setActiveMessages([{ from: item.message.from, to: item.message.to, type: item.message.type }]);
@@ -477,6 +498,22 @@ export default function OrchestratePage() {
                 Messages follow the <a href="https://google.github.io/A2A/" target="_blank" rel="noopener noreferrer" className="text-[#00f0ff] hover:underline">Google A2A Protocol</a> specification format.
                 In this reference implementation, messages are locally simulated to demonstrate the orchestration flow.
                 In a production deployment, these would be HTTP POST requests between agent endpoints with cryptographic signatures.
+              </p>
+            </div>
+
+            {/* A2A ServiceWorker Status */}
+            <div className={`rounded-xl border p-4 ${a2aReady ? 'bg-[#22c55e]/5 border-[#22c55e]/30' : 'bg-[#181924] border-[#2a2d3e]'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-2 h-2 rounded-full ${a2aReady ? 'bg-[#22c55e] animate-pulse' : 'bg-[#6b7280]'}`} />
+                <span className={`text-xs font-semibold ${a2aReady ? 'text-[#22c55e]' : 'text-[#6b7280]'}`}>
+                  A2A Protocol Layer — {a2aReady ? 'ServiceWorker Active' : 'Initializing...'}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#9ca3af] leading-relaxed">
+                {a2aReady
+                  ? `Real HTTP requests are being sent via ServiceWorker to /a2a/tasks/send — visible in browser Network tab (filter: "a2a"). ${a2aTaskIds.length} tasks dispatched this session.`
+                  : 'ServiceWorker is registering. A2A HTTP requests will be available shortly.'
+                }
               </p>
             </div>
 

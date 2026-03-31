@@ -1,0 +1,42 @@
+{
+  "description": "Full 4-agent orchestration flow with risk check and execution",
+  "flowId": "test-vector-02",
+  "messages": [
+    {
+      "from": "Oracle Stream",
+      "to": "Alpha Scout",
+      "type": "task_response",
+      "payload": { "feed": "SOL/USDC", "price": 192.50, "rsi": 28.4 },
+      "timestamp": "2025-01-15T10:00:00Z"
+    },
+    {
+      "from": "Alpha Scout",
+      "to": "Sentinel Guard",
+      "type": "task_request",
+      "payload": { "action": "risk_check", "token": "SOL", "amount": 2.0 },
+      "timestamp": "2025-01-15T10:00:02Z"
+    },
+    {
+      "from": "Sentinel Guard",
+      "to": "Alpha Scout",
+      "type": "task_response",
+      "payload": { "approved": true, "exposure": "32%", "limit": "40%" },
+      "timestamp": "2025-01-15T10:00:03Z"
+    },
+    {
+      "from": "Alpha Scout",
+      "to": "Swift Trader",
+      "type": "task_request",
+      "payload": { "action": "execute_swap", "pair": "SOL/USDC", "side": "buy", "amount": 2.0 },
+      "timestamp": "2025-01-15T10:00:04Z"
+    },
+    {
+      "from": "Swift Trader",
+      "to": "Alpha Scout",
+      "type": "task_response",
+      "payload": { "executed": true, "price": 192.55, "slippage": 0.03 },
+      "timestamp": "2025-01-15T10:00:06Z"
+    }
+  ],
+  "expectedDigest": "SAOP:v1:test-vector-02:1af4785a85775c2ae9faeabb9a728c1826e95c55644b1cbbcc699456c4fec2ea"
+}
