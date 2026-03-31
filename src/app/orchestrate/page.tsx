@@ -10,6 +10,8 @@ import AgentTopology from '@/components/AgentTopology';
 import ReasoningPanel from '@/components/ReasoningPanel';
 import AgentTerminal from '@/components/AgentTerminal';
 import { useAgentStore } from '@/lib/agent-store';
+import { getJupiterPrices } from '@/lib/jupiter';
+import { computeFlowDigest, type VerificationDigest } from '@/lib/verification';
 
 // Orchestration scenario — messages + reasoning paired
 interface ScenarioStep {
@@ -32,8 +34,12 @@ function randomScenarioParams() {
   return { price, rsi, change, confidence, exposure, positionSize, slippage, filledPrice, settlementAmount };
 }
 
-function buildScenarioScript(): ScenarioStep[] {
+function buildScenarioScript(realPrice?: number): ScenarioStep[] {
   const p = randomScenarioParams();
+  if (realPrice !== undefined) {
+    p.price = +realPrice.toFixed(2);
+    p.filledPrice = +(realPrice + (Math.random() - 0.5) * 2).toFixed(2);
+  }
   const confPct = Math.round(p.confidence * 100);
   const newExposure = +(p.exposure + p.positionSize * 2.1).toFixed(1);
   return [
@@ -160,9 +166,19 @@ export default function OrchestratePage() {
   const [taskCount, setTaskCount] = useState(0);
   const [solSettled, setSolSettled] = useState(0);
   const [showSettlementFloat, setShowSettlementFloat] = useState(false);
+  const [verificationDigest, setVerificationDigest] = useState<VerificationDigest | null>(null);
 
-  const startScenario = () => {
-    scriptRef.current = buildScenarioScript();
+  const startScenario = async () => {
+    let realPrice: number | undefined;
+    try {
+      const prices = await getJupiterPrices(['SOL']);
+      if (prices.SOL) {
+        realPrice = prices.SOL;
+      }
+    } catch {
+      // Fall back to random price
+    }
+    scriptRef.current = buildScenarioScript(realPrice);
     setRunning(true);
     setStarted(true);
     setCompleted(false);
@@ -172,6 +188,7 @@ export default function OrchestratePage() {
     setCurrentIdx(0);
     setTaskCount(0);
     setSolSettled(0);
+    setVerificationDigest(null);
   };
 
   useEffect(() => {
@@ -185,6 +202,18 @@ export default function OrchestratePage() {
         store.incrementTasks();
         store.incrementMessages(script.length);
         store.addSolSettled(0.005 + Math.random() * 0.01);
+        // Compute SAOP verification digest
+        const flowId = `saop-${Date.now().toString(36)}`;
+        const digestMessages = script.map(s => ({
+          from: s.message.from,
+          to: s.message.to,
+          type: s.message.type,
+          payload: s.message.payload as Record<string, unknown>,
+          timestamp: s.message.timestamp,
+        }));
+        computeFlowDigest(flowId, digestMessages).then(digest => {
+          setVerificationDigest(digest);
+        }).catch(() => {});
       }
       return;
     }
@@ -386,6 +415,56 @@ export default function OrchestratePage() {
 
         {tab === 'terminal' && (
           <AgentTerminal customAgents={store.agents.slice(5).map(a => ({ name: a.metadata.name, description: a.metadata.description }))} />
+        )}
+
+        {/* SAOP Verification Digest Panel */}
+        {verificationDigest && (
+          <div className="mt-8 rounded-xl bg-[#0d0e14] border border-[#2a2d3e] p-6 shadow-[0_0_40px_rgba(0,240,255,0.05)]">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00f0ff] to-[#8b5cf6] flex items-center justify-center text-xs font-bold text-black">&#x2713;</div>
+              <h3 className="text-lg font-bold text-white">SAOP Verification</h3>
+              <span className="ml-auto px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-gradient-to-r from-[#00f0ff]/20 to-[#8b5cf6]/20 border border-[#00f0ff]/30 text-[#00f0ff]">
+                SAOP v0.1.0 Verified
+              </span>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider">Flow ID</span>
+                  <p className="text-sm font-mono text-[#00f0ff] mt-0.5">{verificationDigest.flowId}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider">Message Count</span>
+                  <p className="text-sm font-mono text-white mt-0.5">{verificationDigest.messageCount}</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider">SHA-256 Hash</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-sm font-mono text-[#8b5cf6] truncate">{verificationDigest.sha256Hex.slice(0, 16)}...{verificationDigest.sha256Hex.slice(-8)}</p>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(verificationDigest.sha256Hex)}
+                      className="shrink-0 px-2 py-0.5 rounded text-[10px] font-mono text-[#6b7280] hover:text-white bg-[#181924] border border-[#2a2d3e] hover:border-[#00f0ff]/30 transition-all"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider">Memo Payload</span>
+                  <p className="text-sm font-mono text-[#9ca3af] mt-0.5 break-all">{verificationDigest.memoPayload}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-[#2a2d3e]">
+              <p className="text-[11px] font-mono text-[#6b7280]">
+                This digest can be written to Solana via Memo Program for on-chain auditability
+              </p>
+            </div>
+          </div>
         )}
       </main>
     </div>

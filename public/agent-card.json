@@ -1,10 +1,18 @@
 {
   "name": "SolAgent Hub Orchestrator",
-  "description": "Agent-to-Agent orchestration layer on Solana. Discovers Metaplex-registered agents, routes A2A messages, and orchestrates multi-agent task flows with trustless SOL settlement via Asset Signer PDAs.",
+  "description": "Agent-to-Agent orchestration layer on Solana with SAOP (Solana Agent Orchestration Protocol) support. Discovers Metaplex-registered agents, routes A2A messages, orchestrates multi-agent task flows with trustless SOL settlement via Asset Signer PDAs, and provides SAOP-compliant orchestration verification and settlement routing per SAOP-SPEC.",
   "url": "https://solagent.hub",
   "version": "1.0.0",
   "protocol": "A2A",
   "protocolVersion": "0.3.0",
+  "saop": {
+    "version": "0.1.0",
+    "spec": "SAOP-SPEC",
+    "capabilities": [
+      "orchestration-verification",
+      "settlement-routing"
+    ]
+  },
   "capabilities": {
     "streaming": false,
     "pushNotifications": false,
@@ -29,6 +37,20 @@
       "id": "risk-gating",
       "name": "Risk Gating",
       "description": "Coordinate risk checks between analyst, executor, and risk management agents before trade execution.",
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "orchestration-verification",
+      "name": "Orchestration Verification",
+      "description": "Verify multi-agent orchestration flows against SAOP-SPEC compliance rules, ensuring task delegation integrity and agent authentication across the pipeline.",
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "settlement-routing",
+      "name": "Settlement Routing",
+      "description": "Route and finalize SOL-based settlements between agents using SAOP-compliant transaction envelopes and Asset Signer PDA co-signatures.",
       "inputModes": ["application/json"],
       "outputModes": ["application/json"]
     }
