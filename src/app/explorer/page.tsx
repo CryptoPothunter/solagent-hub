@@ -1,11 +1,15 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAgentStore } from '@/lib/agent-store';
 import WalletButton from '@/components/WalletButton';
 import { useI18n } from '@/lib/i18n';
 import LanguageToggle from '@/components/LanguageToggle';
 import type { OnChainAgent } from '@/lib/types';
+import { useConnection } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+
+const AGENT_REGISTRY_PROGRAM = new PublicKey('1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p');
 
 function AgentCard({ agent }: { agent: OnChainAgent }) {
   const { t } = useI18n();
@@ -126,6 +130,37 @@ export default function ExplorerPage() {
   const { agents } = useAgentStore();
   const [filter, setFilter] = useState<'all' | 'active' | 'a2a' | 'mcp'>('all');
   const [search, setSearch] = useState('');
+  const { connection } = useConnection();
+  const [onChainCount, setOnChainCount] = useState<number | null>(null);
+  const [queryError, setQueryError] = useState<string | null>(null);
+  const [querying, setQuerying] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function queryRegistry() {
+      setQuerying(true);
+      try {
+        // Query all accounts owned by the Agent Registry program
+        // This discovers real registered agents on Devnet
+        const accounts = await connection.getProgramAccounts(AGENT_REGISTRY_PROGRAM, {
+          dataSlice: { offset: 0, length: 0 }, // We only need count, not data
+        });
+        if (!cancelled) {
+          setOnChainCount(accounts.length);
+          setQueryError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setOnChainCount(null);
+          setQueryError('Could not query Agent Registry');
+        }
+      } finally {
+        if (!cancelled) setQuerying(false);
+      }
+    }
+    queryRegistry();
+    return () => { cancelled = true; };
+  }, [connection]);
 
   const filtered = agents.filter(a => {
     if (filter === 'active' && !a.metadata.active) return false;
@@ -182,6 +217,41 @@ export default function ExplorerPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* On-Chain Registry Status */}
+        <div className="mb-6 rounded-xl bg-[#0d0e14] border border-[#2a2d3e] p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-2 h-2 rounded-full ${querying ? 'bg-[#f59e0b] animate-pulse' : onChainCount !== null ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+              <span className="text-xs font-mono text-[#9ca3af]">
+                {querying ? 'Querying Metaplex Agent Registry on Devnet...' :
+                 onChainCount !== null ? `Devnet Registry: ${onChainCount} on-chain account${onChainCount !== 1 ? 's' : ''} found` :
+                 queryError || 'Registry query failed'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-[#6b7280]">Program: 1DREG...2B2p</span>
+              <a
+                href="https://explorer.solana.com/address/1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p?cluster=devnet"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-mono text-[#8b5cf6] hover:underline"
+              >
+                View on Explorer
+              </a>
+            </div>
+          </div>
+          {onChainCount !== null && onChainCount > 0 && (
+            <p className="mt-2 text-[11px] text-[#6b7280]">
+              Showing {agents.length} demo agents below. On-chain registered agents will be integrated with DAS API indexer.
+            </p>
+          )}
+          {onChainCount === 0 && (
+            <p className="mt-2 text-[11px] text-[#6b7280]">
+              No agents currently registered on Devnet via this program. Showing {agents.length} demo agents for reference.
+            </p>
+          )}
         </div>
 
         {/* Agent Grid */}

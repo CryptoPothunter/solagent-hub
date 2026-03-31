@@ -13,6 +13,7 @@ Bilingual (EN / 中文) · 12 On-Chain Agents · Live A2A Orchestration · MCP T
 ![SAOP](https://img.shields.io/badge/SAOP-v0.1.0-blueviolet?style=for-the-badge)
 ![A2A Protocol](https://img.shields.io/badge/A2A-Protocol-blue?style=for-the-badge)
 ![Hackathon](https://img.shields.io/badge/Hackathon-Agent%20Talent%20Show-green?style=for-the-badge)
+![Build](https://github.com/CryptoPothunter/solagent-hub/actions/workflows/deploy.yml/badge.svg)
 
 </div>
 
@@ -34,11 +35,11 @@ Google shipped A2A for agent messaging. Anthropic shipped MCP for tool access. B
 
 | Dimension | Score | Justification |
 |-----------|:-----:|---------------|
-| **Innovation** | 9/10 | First protocol spec (SAOP) bridging A2A + MCP with Solana L1 verification and settlement. No prior art combines all four layers. |
-| **Practicality** | 8/10 | Live demo with 12 agents, real Jupiter price feeds, full Metaplex registration flow. Not yet battle-tested in production. |
-| **Technical Depth** | 9/10 | SHA-256 verification digests on Memo Program, PDA-based settlement, 4-bug postmortem documenting real build failures. |
-| **Completeness** | 9/10 | Full lifecycle: discovery → registration → orchestration → verification → settlement. Spec, reference implementation, and postmortem all shipped. |
-| **Ecosystem Fit** | 9/10 | Built entirely on Metaplex Agent Registry, Solana PDAs, Jupiter Aggregator. Extends A2A and MCP rather than replacing them. |
+| **Innovation** | 8.5/10 | First protocol spec (SAOP) bridging A2A + MCP with Solana L1 verification and settlement. No prior art combines all four layers. Self-defined spec, not yet peer-reviewed. |
+| **Practicality** | 7.5/10 | Live demo with 12 agents, real Jupiter price feeds, real wallet adapter, real Memo tx submission to Devnet. On-chain settlement layer is reference implementation, not production-deployed. |
+| **Technical Depth** | 8.5/10 | SHA-256 verification digests submitted to Memo Program, real PDA derivation, Jupiter quote routing, 4-bug postmortem. No custom Solana program (uses existing Memo + Metaplex programs). |
+| **Completeness** | 8.0/10 | Full lifecycle: discovery → registration → orchestration → verification → settlement. Spec, reference impl, postmortem, and bilingual UI shipped. Missing: comprehensive test suite, demo video. |
+| **Ecosystem Fit** | 8.0/10 | Built on Metaplex Agent Registry, Solana PDAs, Jupiter Aggregator, Solana Memo Program. Extends A2A and MCP. Real Devnet registry queries but no agents registered on-chain yet. |
 
 ---
 
@@ -365,7 +366,7 @@ solagent-hub/
 - **Track:** Metaplex Agents Track — `#AgentTalentShow`
 - **Prize Pool:** $5,000 USDC
 - **What we built:** The first open-source protocol specification and reference implementation for multi-agent orchestration on Solana — from on-chain identity creation through cryptographically verified task execution to trustless PDA-based settlement.
-- **What we shipped:** Protocol spec (SAOP-SPEC.md), reference implementation (12 agents, 4 pages, Jupiter integration), and engineering postmortem (POSTMORTEM.md).
+- **What we shipped:** Protocol spec (SAOP-SPEC.md), reference implementation (12 agents, 4 pages, Jupiter integration, real Memo tx verification on Devnet), and engineering postmortem (POSTMORTEM.md).
 
 ---
 

@@ -10,8 +10,10 @@ import AgentTopology from '@/components/AgentTopology';
 import ReasoningPanel from '@/components/ReasoningPanel';
 import AgentTerminal from '@/components/AgentTerminal';
 import { useAgentStore } from '@/lib/agent-store';
-import { getJupiterPrices } from '@/lib/jupiter';
-import { computeFlowDigest, type VerificationDigest } from '@/lib/verification';
+import { getJupiterPrices, getJupiterQuote, formatQuoteSummary } from '@/lib/jupiter';
+import { computeFlowDigest, buildVerificationTransaction, verifyOnChainDigest, type VerificationDigest } from '@/lib/verification';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection } from '@solana/wallet-adapter-react';
 
 // Orchestration scenario — messages + reasoning paired
 interface ScenarioStep {
@@ -167,6 +169,40 @@ export default function OrchestratePage() {
   const [solSettled, setSolSettled] = useState(0);
   const [showSettlementFloat, setShowSettlementFloat] = useState(false);
   const [verificationDigest, setVerificationDigest] = useState<VerificationDigest | null>(null);
+  const { publicKey, sendTransaction } = useWallet();
+  const { connection } = useConnection();
+  const [memoTxSignature, setMemoTxSignature] = useState<string | null>(null);
+  const [memoTxStatus, setMemoTxStatus] = useState<'idle' | 'signing' | 'confirming' | 'confirmed' | 'error'>('idle');
+  const [memoTxError, setMemoTxError] = useState<string | null>(null);
+  const [onChainVerified, setOnChainVerified] = useState<boolean | null>(null);
+  const [jupiterRoute, setJupiterRoute] = useState<string | null>(null);
+
+  const submitMemoTx = async () => {
+    if (!verificationDigest || !publicKey) return;
+    setMemoTxStatus('signing');
+    setMemoTxError(null);
+    try {
+      const tx = await buildVerificationTransaction(verificationDigest, publicKey);
+      setMemoTxStatus('confirming');
+      const signature = await sendTransaction(tx, connection);
+      setMemoTxSignature(signature);
+      // Wait for confirmation
+      await connection.confirmTransaction(signature, 'confirmed');
+      setMemoTxStatus('confirmed');
+      // Verify on-chain
+      setTimeout(async () => {
+        try {
+          const result = await verifyOnChainDigest(signature, verificationDigest);
+          setOnChainVerified(result.verified);
+        } catch {
+          setOnChainVerified(null);
+        }
+      }, 3000);
+    } catch (err: unknown) {
+      setMemoTxStatus('error');
+      setMemoTxError(err instanceof Error ? err.message : 'Transaction failed');
+    }
+  };
 
   const startScenario = async () => {
     let realPrice: number | undefined;
@@ -178,6 +214,12 @@ export default function OrchestratePage() {
     } catch {
       // Fall back to random price
     }
+    try {
+      const quote = await getJupiterQuote({ inputSymbol: 'USDC', outputSymbol: 'SOL', amount: 280_000_000 }); // 280 USDC in micro-units
+      if (quote) {
+        setJupiterRoute(formatQuoteSummary(quote, 'USDC', 'SOL'));
+      }
+    } catch {}
     scriptRef.current = buildScenarioScript(realPrice);
     setRunning(true);
     setStarted(true);
@@ -189,6 +231,11 @@ export default function OrchestratePage() {
     setTaskCount(0);
     setSolSettled(0);
     setVerificationDigest(null);
+    setMemoTxSignature(null);
+    setMemoTxStatus('idle');
+    setMemoTxError(null);
+    setOnChainVerified(null);
+    setJupiterRoute(null);
   };
 
   useEffect(() => {
@@ -423,9 +470,21 @@ export default function OrchestratePage() {
             <div className="flex items-center gap-3 mb-5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00f0ff] to-[#8b5cf6] flex items-center justify-center text-xs font-bold text-black">&#x2713;</div>
               <h3 className="text-lg font-bold text-white">SAOP Verification</h3>
-              <span className="ml-auto px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-gradient-to-r from-[#00f0ff]/20 to-[#8b5cf6]/20 border border-[#00f0ff]/30 text-[#00f0ff]">
-                SAOP v0.1.0 Verified
-              </span>
+              {memoTxStatus === 'confirmed' && onChainVerified === true && (
+                <span className="ml-auto px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#22c55e]/20 border border-[#22c55e]/30 text-[#22c55e]">
+                  On-Chain Verified
+                </span>
+              )}
+              {memoTxStatus === 'confirmed' && onChainVerified === false && (
+                <span className="ml-auto px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#ef4444]/20 border border-[#ef4444]/30 text-[#ef4444]">
+                  Verification Mismatch
+                </span>
+              )}
+              {memoTxStatus !== 'confirmed' && (
+                <span className="ml-auto px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-gradient-to-r from-[#00f0ff]/20 to-[#8b5cf6]/20 border border-[#00f0ff]/30 text-[#00f0ff]">
+                  SAOP v0.1.0
+                </span>
+              )}
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
@@ -441,7 +500,7 @@ export default function OrchestratePage() {
               </div>
               <div className="space-y-3">
                 <div>
-                  <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider">SHA-256 Hash</span>
+                  <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider">SHA-256 Digest</span>
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-sm font-mono text-[#8b5cf6] truncate">{verificationDigest.sha256Hex.slice(0, 16)}...{verificationDigest.sha256Hex.slice(-8)}</p>
                     <button
@@ -459,10 +518,90 @@ export default function OrchestratePage() {
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-[#2a2d3e]">
-              <p className="text-[11px] font-mono text-[#6b7280]">
-                This digest can be written to Solana via Memo Program for on-chain auditability
-              </p>
+            {/* Jupiter Route Display */}
+            {jupiterRoute && (
+              <div className="mt-4 pt-4 border-t border-[#2a2d3e]">
+                <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider">Jupiter Quote Route</span>
+                <p className="text-xs font-mono text-[#22c55e] mt-1">{jupiterRoute}</p>
+              </div>
+            )}
+
+            {/* On-Chain Submission Section */}
+            <div className="mt-5 pt-5 border-t border-[#2a2d3e]">
+              {!publicKey && (
+                <div className="flex items-center gap-3 text-xs text-[#6b7280]">
+                  <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
+                  <span>Connect wallet to submit verification digest to Solana Devnet</span>
+                </div>
+              )}
+
+              {publicKey && memoTxStatus === 'idle' && (
+                <button
+                  onClick={submitMemoTx}
+                  className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#00f0ff] to-[#8b5cf6] text-black text-sm font-semibold hover:shadow-[0_0_20px_rgba(0,240,255,0.3)] transition-all"
+                >
+                  Submit Verification to Solana
+                </button>
+              )}
+
+              {memoTxStatus === 'signing' && (
+                <div className="flex items-center gap-3 text-sm text-[#f59e0b]">
+                  <div className="w-4 h-4 border-2 border-[#f59e0b] border-t-transparent rounded-full animate-spin" />
+                  Waiting for wallet signature...
+                </div>
+              )}
+
+              {memoTxStatus === 'confirming' && (
+                <div className="flex items-center gap-3 text-sm text-[#00f0ff]">
+                  <div className="w-4 h-4 border-2 border-[#00f0ff] border-t-transparent rounded-full animate-spin" />
+                  Confirming on Solana Devnet...
+                </div>
+              )}
+
+              {memoTxStatus === 'error' && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-[#ef4444]">
+                    <span>Transaction failed</span>
+                  </div>
+                  {memoTxError && <p className="text-[11px] font-mono text-[#6b7280]">{memoTxError}</p>}
+                  <button onClick={submitMemoTx} className="text-xs text-[#00f0ff] hover:underline">Retry</button>
+                </div>
+              )}
+
+              {memoTxStatus === 'confirmed' && memoTxSignature && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
+                    <span className="text-sm text-[#22c55e] font-semibold">Transaction Confirmed</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider">Transaction Signature</span>
+                    <div className="flex items-center gap-3 mt-1">
+                      <p className="text-xs font-mono text-[#00f0ff]">{memoTxSignature.slice(0, 20)}...{memoTxSignature.slice(-8)}</p>
+                      <a
+                        href={`https://explorer.solana.com/tx/${memoTxSignature}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-mono text-[#8b5cf6] hover:underline"
+                      >
+                        Solana Explorer
+                      </a>
+                      <a
+                        href={`https://solscan.io/tx/${memoTxSignature}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-mono text-[#8b5cf6] hover:underline"
+                      >
+                        Solscan
+                      </a>
+                    </div>
+                  </div>
+                  <p className="text-[11px] font-mono text-[#6b7280]">
+                    Memo data &quot;{verificationDigest.memoPayload.slice(0, 30)}...&quot; is now permanently recorded on Solana Devnet.
+                    Anyone can independently verify the orchestration flow by recomputing the SHA-256 digest and comparing it to the on-chain memo.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

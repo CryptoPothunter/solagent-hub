@@ -97,6 +97,11 @@ const translations: Translations = {
     en: 'Every agent has a built-in wallet PDA with no private key. It can receive SOL and tokens, but only the asset itself can sign outgoing transactions via delegated executives.',
     zh: '每个 Agent 都有一个内置的无私钥钱包 PDA。它可以接收 SOL 和代币，但只有资产本身才能通过委托的 Executive 签署外发交易。',
   },
+  'explorer.registry.querying': { en: 'Querying Metaplex Agent Registry on Devnet...', zh: '正在查询 Devnet 上的 Metaplex Agent Registry...' },
+  'explorer.registry.found': { en: 'on-chain accounts found', zh: '个链上账户' },
+  'explorer.registry.failed': { en: 'Registry query failed', zh: 'Registry 查询失败' },
+  'explorer.registry.noAgents': { en: 'No agents currently registered on Devnet via this program.', zh: '当前 Devnet 上没有通过此程序注册的 Agent。' },
+  'explorer.registry.showingDemo': { en: 'demo agents for reference', zh: '个演示 Agent 作为参考' },
 
   // --- Register page ---
   'register.title': { en: 'Register an Agent', zh: '注册 Agent' },
@@ -174,6 +179,18 @@ const translations: Translations = {
     zh: '点击"开始编排"启动 A2A 编排演示',
   },
   'orch.feed.processing': { en: 'Processing', zh: '处理中' },
+  'orch.verify.title': { en: 'SAOP Verification', zh: 'SAOP 验证' },
+  'orch.verify.onChainVerified': { en: 'On-Chain Verified', zh: '链上已验证' },
+  'orch.verify.mismatch': { en: 'Verification Mismatch', zh: '验证不匹配' },
+  'orch.verify.connectWallet': { en: 'Connect wallet to submit verification digest to Solana Devnet', zh: '连接钱包以将验证摘要提交到 Solana Devnet' },
+  'orch.verify.submit': { en: 'Submit Verification to Solana', zh: '提交验证到 Solana' },
+  'orch.verify.signing': { en: 'Waiting for wallet signature...', zh: '等待钱包签名...' },
+  'orch.verify.confirming': { en: 'Confirming on Solana Devnet...', zh: '在 Solana Devnet 上确认中...' },
+  'orch.verify.failed': { en: 'Transaction failed', zh: '交易失败' },
+  'orch.verify.confirmed': { en: 'Transaction Confirmed', zh: '交易已确认' },
+  'orch.verify.onChainNote': { en: 'Memo data is now permanently recorded on Solana Devnet. Anyone can independently verify the orchestration flow.', zh: 'Memo 数据已永久记录在 Solana Devnet 上。任何人都可以独立验证编排流程。' },
+  'orch.verify.retry': { en: 'Retry', zh: '重试' },
+  'orch.jupiter.route': { en: 'Jupiter Route', zh: 'Jupiter 路由' },
 
   // --- Tools page ---
   'tools.title': { en: 'MCP Tools Explorer', zh: 'MCP 工具浏览器' },
