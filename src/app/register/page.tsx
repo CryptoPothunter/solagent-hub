@@ -6,6 +6,8 @@ import LanguageToggle from '@/components/LanguageToggle';
 import { useAgentStore } from '@/lib/agent-store';
 import { useI18n } from '@/lib/i18n';
 import { deriveAgentIdentityPda, deriveAssetSignerPda, deriveExecutiveProfilePda } from '@/lib/metaplex';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection } from '@solana/wallet-adapter-react';
 
 type Step = 'config' | 'create_asset' | 'upload_metadata' | 'register_identity' | 'setup_executive' | 'delegate' | 'done';
 
@@ -122,6 +124,8 @@ await delegateExecutionV1(umi, {
 export default function RegisterPage() {
   const { addAgent } = useAgentStore();
   const { t } = useI18n();
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
   const [currentStep, setCurrentStep] = useState(0);
   const [agentName, setAgentName] = useState('');
   const [agentDesc, setAgentDesc] = useState('');
@@ -130,6 +134,7 @@ export default function RegisterPage() {
   const [processing, setProcessing] = useState(false);
   const [txLogs, setTxLogs] = useState<string[]>([]);
   const [assetKey, setAssetKey] = useState('');
+  const isLiveMode = !!publicKey;
 
   const step = STEPS[currentStep];
 
@@ -258,7 +263,20 @@ export default function RegisterPage() {
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <h1 className="text-3xl font-bold mb-2">{t('register.title')}</h1>
-        <p className="text-sm text-[#6b7280] mb-8">{t('register.subtitle')}</p>
+        <p className="text-sm text-[#6b7280] mb-4">{t('register.subtitle')}</p>
+
+        {/* Live / Demo Mode Banner */}
+        <div className={`mb-6 rounded-xl p-3 border ${isLiveMode ? 'border-[#22c55e]/30 bg-[#22c55e]/5' : 'border-[#f59e0b]/30 bg-[#f59e0b]/5'}`}>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isLiveMode ? 'bg-[#22c55e] animate-pulse' : 'bg-[#f59e0b]'}`} />
+            <span className={`text-xs font-mono ${isLiveMode ? 'text-[#22c55e]' : 'text-[#f59e0b]'}`}>
+              {isLiveMode
+                ? `LIVE MODE — Wallet connected: ${publicKey.toBase58().slice(0, 8)}... — Transactions will be submitted to Devnet`
+                : 'DEMO MODE — Connect your Solana wallet (top right) to register a real agent on Devnet'
+              }
+            </span>
+          </div>
+        </div>
 
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           {/* Step Sidebar */}

@@ -137,6 +137,9 @@ function RealAgentCard() {
 
   const REGISTER_TX = '5a8e7TTz3in3oNv59tnf9zp4fCWG8yWWR7qD3oNdkUb9mLh1kcw9iv9DhhKLPqW6tmP6RrNcs522QY6tm5ur1R5h';
   const CREATE_TX = '5HUjKCfVgsz1bGnw1frWKH1A2zgxXS1hJUAi2Pc14TQxCBeeDPczyR824GLew1Yag9VBhG1UBQXjJ6wv7b23XDLS';
+  const DELEGATE_TX = 'hzVaWAQXAK46TurBnSZqdzXg2FxNghgBr9fEbjPQ6urkYHLNwNsvF787Q7u6jczr7AFrxG5L1YDg5RqTc8yCpAE';
+  const EXECUTIVE_PDA = '5FDWpgZMbMHHbUj76cb8w7HaBdsByQBwY3UwE5CowCGJ';
+  const DELEGATE_RECORD = 'EjB8idkfraqPNDq3NuvXtML6aBGsiW9dTuc2arBzrMvA';
 
   return (
     <div className="rounded-xl border-2 border-[#22c55e]/40 bg-gradient-to-r from-[#22c55e]/5 to-[#00f0ff]/5 p-5">
@@ -201,6 +204,18 @@ function RealAgentCard() {
             <span className="text-[#22c55e]">solana:101:metaplex</span>
           </div>
           <div className="flex justify-between items-center">
+            <span className="text-[#6b7280]">Executive Profile</span>
+            <a href={`https://explorer.solana.com/address/${EXECUTIVE_PDA}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-[#8b5cf6] hover:underline">
+              {EXECUTIVE_PDA.slice(0, 16)}...
+            </a>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#6b7280]">Delegate Record</span>
+            <a href={`https://explorer.solana.com/address/${DELEGATE_RECORD}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-[#8b5cf6] hover:underline">
+              {DELEGATE_RECORD.slice(0, 16)}...
+            </a>
+          </div>
+          <div className="flex justify-between items-center">
             <span className="text-[#6b7280]">ERC-8004 URI</span>
             <a href={agent.registrationUri} target="_blank" rel="noopener noreferrer" className="text-[#00f0ff] hover:underline truncate max-w-[280px]">
               {agent.registrationUri}
@@ -218,6 +233,12 @@ function RealAgentCard() {
               <span className="text-[#6b7280]">Register Identity TX</span>
               <a href={`https://explorer.solana.com/tx/${REGISTER_TX}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-[#8b5cf6] hover:underline">
                 {REGISTER_TX.slice(0, 20)}...
+              </a>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#6b7280]">Delegate Execution TX</span>
+              <a href={`https://explorer.solana.com/tx/${DELEGATE_TX}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-[#8b5cf6] hover:underline">
+                {DELEGATE_TX.slice(0, 20)}...
               </a>
             </div>
           </div>

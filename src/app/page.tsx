@@ -9,6 +9,8 @@ import DevnetStatus from '@/components/DevnetStatus';
 import { useAgentStore } from '@/lib/agent-store';
 import { useI18n } from '@/lib/i18n';
 import LanguageToggle from '@/components/LanguageToggle';
+import { useConnection } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 
 const NAV_ITEMS = [
   { href: '/explorer', labelKey: 'nav.explorer', icon: '⬡', descKey: 'home.nav.explorer.desc' },
@@ -23,10 +25,20 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { agents, taskCount, messageCount, solSettled } = useAgentStore();
   const { t } = useI18n();
+  const { connection } = useConnection();
+  const [onChainAccounts, setOnChainAccounts] = useState<number | null>(null);
   useEffect(() => setMounted(true), []);
 
+  // Query real on-chain registry count
+  useEffect(() => {
+    const REGISTRY = new PublicKey('1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p');
+    connection.getProgramAccounts(REGISTRY, { dataSlice: { offset: 0, length: 0 } })
+      .then(accounts => setOnChainAccounts(accounts.length))
+      .catch(() => {});
+  }, [connection]);
+
   const stats = [
-    { label: t('home.stats.agents'), value: agents.length, suffix: '', duration: 1200 },
+    { label: t('home.stats.agents'), value: agents.length, suffix: onChainAccounts !== null ? ` (${onChainAccounts} on-chain)` : '', duration: 1200 },
     { label: t('home.stats.messages'), value: messageCount, suffix: '', duration: 1800 },
     { label: t('home.stats.tasks'), value: taskCount, suffix: '', duration: 1500 },
     { label: t('home.stats.sol'), value: solSettled, suffix: 'SOL', duration: 2000 },

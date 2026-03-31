@@ -9,10 +9,11 @@ import { OnChainAgent, TaskRequest, A2AMessage } from './types';
 export const REAL_ONCHAIN_AGENT: OnChainAgent = {
   assetPublicKey: 'ALSwAJHKiSF8CWCYqadoAcrYQkJc8dd8pwhWygqKsWN2',
   owner: '9zUL5izBErPh6ErkszZbsWW4EkWYSckuc4d3hrJKnAYC',
-  identityPda: '', // Derived at runtime
+  identityPda: 'HhXcwY172f7MUtLMwFJfdmacEVWvupbbcWFqwtpi96V2',
   walletPda: '',   // Derived at runtime
   registrationUri: 'https://cryptopothunter.github.io/solagent-hub/agent-card.json',
   walletBalance: 0,
+  delegatedTo: '5FDWpgZMbMHHbUj76cb8w7HaBdsByQBwY3UwE5CowCGJ',
   createdAt: '2026-03-31T23:17:22Z',
   metadata: {
     type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',

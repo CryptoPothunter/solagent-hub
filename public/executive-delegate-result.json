@@ -1,0 +1,19 @@
+{
+  "network": "devnet",
+  "timestamp": "2026-03-31T23:28:55.583Z",
+  "authority": "9zUL5izBErPh6ErkszZbsWW4EkWYSckuc4d3hrJKnAYC",
+  "agentAsset": "ALSwAJHKiSF8CWCYqadoAcrYQkJc8dd8pwhWygqKsWN2",
+  "executiveProfile": "5FDWpgZMbMHHbUj76cb8w7HaBdsByQBwY3UwE5CowCGJ",
+  "agentIdentity": "HhXcwY172f7MUtLMwFJfdmacEVWvupbbcWFqwtpi96V2",
+  "executionDelegateRecord": "EjB8idkfraqPNDq3NuvXtML6aBGsiW9dTuc2arBzrMvA",
+  "transactions": {
+    "registerExecutive": "already-registered",
+    "delegateExecution": "hzVaWAQXAK46TurBnSZqdzXg2FxNghgBr9fEbjPQ6urkYHLNwNsvF787Q7u6jczr7AFrxG5L1YDg5RqTc8yCpAE"
+  },
+  "explorerLinks": {
+    "executiveProfile": "https://explorer.solana.com/address/5FDWpgZMbMHHbUj76cb8w7HaBdsByQBwY3UwE5CowCGJ?cluster=devnet",
+    "executionDelegateRecord": "https://explorer.solana.com/address/EjB8idkfraqPNDq3NuvXtML6aBGsiW9dTuc2arBzrMvA?cluster=devnet",
+    "registerTx": "https://explorer.solana.com/tx/already-registered?cluster=devnet",
+    "delegateTx": "https://explorer.solana.com/tx/hzVaWAQXAK46TurBnSZqdzXg2FxNghgBr9fEbjPQ6urkYHLNwNsvF787Q7u6jczr7AFrxG5L1YDg5RqTc8yCpAE?cluster=devnet"
+  }
+}

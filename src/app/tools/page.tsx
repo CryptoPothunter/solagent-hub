@@ -4,6 +4,7 @@ import { useState } from 'react';
 import WalletButton from '@/components/WalletButton';
 import { useI18n } from '@/lib/i18n';
 import LanguageToggle from '@/components/LanguageToggle';
+import { getJupiterPrices, TOKEN_MINTS } from '@/lib/jupiter';
 
 interface ToolParam {
   name: string;
@@ -292,6 +293,74 @@ function ToolCard({ tool, color }: { tool: Tool; color: string }) {
   );
 }
 
+function LivePriceTool() {
+  const [token, setToken] = useState('SOL');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPrice = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const prices = await getJupiterPrices([token]);
+      if (prices && prices[token] !== undefined) {
+        setResult(JSON.stringify({
+          token,
+          price: prices[token],
+          source: 'Jupiter Price API v2',
+          timestamp: new Date().toISOString(),
+          network: 'mainnet',
+        }, null, 2));
+      } else {
+        setError(`No price data for ${token}`);
+      }
+    } catch (e) {
+      setError(String(e));
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="rounded-xl border-2 border-[#22c55e]/30 bg-gradient-to-r from-[#22c55e]/5 to-transparent p-5 mb-8">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+        <span className="text-xs font-mono font-semibold text-[#22c55e]">LIVE MCP TOOL — Real Jupiter Price API</span>
+      </div>
+      <p className="text-xs text-[#9ca3af] mb-4">
+        This tool calls the real Jupiter Price API v2 and returns live market data. Try it below.
+      </p>
+      <div className="flex items-center gap-3 mb-3">
+        <select
+          value={token}
+          onChange={e => setToken(e.target.value)}
+          className="px-3 py-2 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-sm text-white font-mono focus:outline-none focus:border-[#22c55e]/50"
+        >
+          {Object.keys(TOKEN_MINTS).map(t => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+        <button
+          onClick={fetchPrice}
+          disabled={loading}
+          className="px-4 py-2 rounded-lg bg-[#22c55e]/20 text-[#22c55e] text-sm font-mono border border-[#22c55e]/30 hover:bg-[#22c55e]/30 disabled:opacity-40 transition-all"
+        >
+          {loading ? 'Fetching...' : 'get_price_feed →'}
+        </button>
+      </div>
+      {result && (
+        <div className="bg-[#0a0b0f] rounded-lg border border-[#2a2d3e] p-3">
+          <pre className="text-[11px] font-mono text-[#22c55e] whitespace-pre">{result}</pre>
+        </div>
+      )}
+      {error && (
+        <div className="text-xs text-[#ef4444] font-mono">{error}</div>
+      )}
+    </div>
+  );
+}
+
 export default function ToolsPage() {
   const { t } = useI18n();
   return (
@@ -321,6 +390,9 @@ export default function ToolsPage() {
           <h1 className="text-3xl font-bold mb-2">{t('tools.title')}</h1>
           <p className="text-sm text-[#6b7280]">{t('tools.subtitle')}</p>
         </div>
+
+        {/* Live Tool */}
+        <LivePriceTool />
 
         {/* Agent Sections */}
         <div className="space-y-12">
