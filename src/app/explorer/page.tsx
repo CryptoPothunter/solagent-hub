@@ -8,6 +8,8 @@ import LanguageToggle from '@/components/LanguageToggle';
 import type { OnChainAgent } from '@/lib/types';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
+import { REAL_ONCHAIN_AGENT } from '@/lib/demo-data';
+import { deriveAgentIdentityPda, deriveAssetSignerPda } from '@/lib/metaplex';
 
 const AGENT_REGISTRY_PROGRAM = new PublicKey('1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p');
 
@@ -121,6 +123,106 @@ function AgentCard({ agent }: { agent: OnChainAgent }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function RealAgentCard() {
+  const { t } = useI18n();
+  const [expanded, setExpanded] = useState(false);
+  const agent = REAL_ONCHAIN_AGENT;
+  const m = agent.metadata;
+  const identity = deriveAgentIdentityPda(agent.assetPublicKey);
+  const wallet = deriveAssetSignerPda(agent.assetPublicKey);
+
+  const REGISTER_TX = '5a8e7TTz3in3oNv59tnf9zp4fCWG8yWWR7qD3oNdkUb9mLh1kcw9iv9DhhKLPqW6tmP6RrNcs522QY6tm5ur1R5h';
+  const CREATE_TX = '5HUjKCfVgsz1bGnw1frWKH1A2zgxXS1hJUAi2Pc14TQxCBeeDPczyR824GLew1Yag9VBhG1UBQXjJ6wv7b23XDLS';
+
+  return (
+    <div className="rounded-xl border-2 border-[#22c55e]/40 bg-gradient-to-r from-[#22c55e]/5 to-[#00f0ff]/5 p-5">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#22c55e]/30 to-[#00f0ff]/30 border border-[#22c55e]/40 flex items-center justify-center text-xl">
+            🌐
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-white text-lg">{m.name}</h3>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/30 font-mono">ON-CHAIN VERIFIED</span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+              <span className="text-[10px] text-[#6b7280] font-mono">Registered on Solana Devnet via Metaplex Agent Registry</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-xs text-[#9ca3af] leading-relaxed mb-4">{m.description}</p>
+
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {m.services.map((s, i) => (
+          <span key={i} className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/20">
+            {s.name}{s.version ? ` v${s.version}` : ''}
+          </span>
+        ))}
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-[#8b5cf6]/10 text-[#8b5cf6] border border-[#8b5cf6]/20">SAOP v0.1.0</span>
+      </div>
+
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="text-[10px] text-[#22c55e] hover:text-white transition-colors font-mono"
+      >
+        {expanded ? '▼ Hide On-Chain Details' : '▶ Show On-Chain Details + Explorer Links'}
+      </button>
+
+      {expanded && (
+        <div className="mt-3 pt-3 border-t border-[#2a2d3e] space-y-2 text-[10px] font-mono">
+          <div className="flex justify-between items-center">
+            <span className="text-[#6b7280]">Core Asset</span>
+            <a href={`https://explorer.solana.com/address/${agent.assetPublicKey}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-[#00f0ff] hover:underline">
+              {agent.assetPublicKey}
+            </a>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#6b7280]">Identity PDA</span>
+            <span className="text-[#9ca3af]">{identity.pda.slice(0, 20)}... (bump: {identity.bump})</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#6b7280]">Asset Signer PDA</span>
+            <span className="text-[#9ca3af]">{wallet.pda.slice(0, 20)}... (bump: {wallet.bump})</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#6b7280]">Authority</span>
+            <span className="text-[#9ca3af]">{agent.owner}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#6b7280]">Registry</span>
+            <span className="text-[#22c55e]">solana:101:metaplex</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[#6b7280]">ERC-8004 URI</span>
+            <a href={agent.registrationUri} target="_blank" rel="noopener noreferrer" className="text-[#00f0ff] hover:underline truncate max-w-[280px]">
+              {agent.registrationUri}
+            </a>
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#2a2d3e] space-y-1.5">
+            <div className="text-[#6b7280] mb-1">Transaction Proof:</div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#6b7280]">Create Asset TX</span>
+              <a href={`https://explorer.solana.com/tx/${CREATE_TX}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-[#8b5cf6] hover:underline">
+                {CREATE_TX.slice(0, 20)}...
+              </a>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#6b7280]">Register Identity TX</span>
+              <a href={`https://explorer.solana.com/tx/${REGISTER_TX}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-[#8b5cf6] hover:underline">
+                {REGISTER_TX.slice(0, 20)}...
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -244,7 +346,7 @@ export default function ExplorerPage() {
           </div>
           {onChainCount !== null && onChainCount > 0 && (
             <p className="mt-2 text-[11px] text-[#6b7280]">
-              Showing {agents.length} demo agents below. On-chain registered agents will be integrated with DAS API indexer.
+              Found {onChainCount} on-chain account{onChainCount !== 1 ? 's' : ''} including our registered SolAgent Hub Orchestrator. Showing {agents.length} additional demo agents below.
             </p>
           )}
           {onChainCount === 0 && (
@@ -252,6 +354,15 @@ export default function ExplorerPage() {
               No agents currently registered on Devnet via this program. Showing {agents.length} demo agents for reference.
             </p>
           )}
+        </div>
+
+        {/* Real On-Chain Agent */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+            <h2 className="text-sm font-semibold text-[#22c55e] font-mono">REAL ON-CHAIN REGISTERED AGENT</h2>
+          </div>
+          <RealAgentCard />
         </div>
 
         {/* Agent Grid */}

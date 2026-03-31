@@ -1,0 +1,16 @@
+{
+  "network": "devnet",
+  "timestamp": "2026-03-31T23:17:22.921Z",
+  "authority": "9zUL5izBErPh6ErkszZbsWW4EkWYSckuc4d3hrJKnAYC",
+  "asset": "ALSwAJHKiSF8CWCYqadoAcrYQkJc8dd8pwhWygqKsWN2",
+  "agentCardUri": "https://cryptopothunter.github.io/solagent-hub/agent-card.json",
+  "transactions": {
+    "createAsset": "reused-existing",
+    "registerIdentity": "5a8e7TTz3in3oNv59tnf9zp4fCWG8yWWR7qD3oNdkUb9mLh1kcw9iv9DhhKLPqW6tmP6RrNcs522QY6tm5ur1R5h"
+  },
+  "explorerLinks": {
+    "asset": "https://explorer.solana.com/address/ALSwAJHKiSF8CWCYqadoAcrYQkJc8dd8pwhWygqKsWN2?cluster=devnet",
+    "createTx": null,
+    "registerTx": "https://explorer.solana.com/tx/5a8e7TTz3in3oNv59tnf9zp4fCWG8yWWR7qD3oNdkUb9mLh1kcw9iv9DhhKLPqW6tmP6RrNcs522QY6tm5ur1R5h?cluster=devnet"
+  }
+}

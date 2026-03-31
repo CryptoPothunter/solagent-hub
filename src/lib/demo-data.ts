@@ -1,6 +1,33 @@
 // Demo agents data — simulates on-chain registered agents via Metaplex Agent Registry
 import { OnChainAgent, TaskRequest, A2AMessage } from './types';
 
+// ============================================================
+// REAL ON-CHAIN AGENT — Registered on Solana Devnet
+// Core Asset: ALSwAJHKiSF8CWCYqadoAcrYQkJc8dd8pwhWygqKsWN2
+// Identity TX: 5a8e7TTz3in3oNv59tnf9zp4fCWG8yWWR7qD3oNdkUb9mLh1kcw9iv9DhhKLPqW6tmP6RrNcs522QY6tm5ur1R5h
+// ============================================================
+export const REAL_ONCHAIN_AGENT: OnChainAgent = {
+  assetPublicKey: 'ALSwAJHKiSF8CWCYqadoAcrYQkJc8dd8pwhWygqKsWN2',
+  owner: '9zUL5izBErPh6ErkszZbsWW4EkWYSckuc4d3hrJKnAYC',
+  identityPda: '', // Derived at runtime
+  walletPda: '',   // Derived at runtime
+  registrationUri: 'https://cryptopothunter.github.io/solagent-hub/agent-card.json',
+  walletBalance: 0,
+  createdAt: '2026-03-31T23:17:22Z',
+  metadata: {
+    type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
+    name: 'SolAgent Hub Orchestrator',
+    description: 'Real on-chain registered agent. Agent-to-Agent orchestration layer on Solana with SAOP protocol support. Discovers Metaplex-registered agents, routes A2A messages, and orchestrates multi-agent task flows.',
+    image: '/agents/orchestrator.svg',
+    services: [
+      { name: 'A2A', endpoint: 'https://cryptopothunter.github.io/solagent-hub/agent-card.json', version: '0.3.0' },
+    ],
+    active: true,
+    registrations: [{ agentId: 'ALSwAJHKiSF8CWCYqadoAcrYQkJc8dd8pwhWygqKsWN2', agentRegistry: 'solana:101:metaplex' }],
+    supportedTrust: ['reputation', 'crypto-economic'],
+  },
+};
+
 export const DEMO_AGENTS: OnChainAgent[] = [
   {
     assetPublicKey: 'AGT1...MarketAnalyst7xK',
