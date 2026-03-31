@@ -37,22 +37,26 @@ function randomScenarioParams() {
   return { price, rsi, change, confidence, exposure, positionSize, slippage, filledPrice, settlementAmount };
 }
 
-function buildScenarioScript(realPrice?: number): ScenarioStep[] {
+function buildScenarioScript(realPrice?: number, token?: string, action?: string, size?: number): ScenarioStep[] {
   const p = randomScenarioParams();
   if (realPrice !== undefined) {
     p.price = +realPrice.toFixed(2);
     p.filledPrice = +(realPrice + (Math.random() - 0.5) * 2).toFixed(2);
   }
+  const tkn = token || 'SOL';
+  const act = action || 'BUY';
+  const sz = size || p.positionSize;
+  if (size !== undefined) p.positionSize = +sz.toFixed(1);
   const confPct = Math.round(p.confidence * 100);
   const newExposure = +(p.exposure + p.positionSize * 2.1).toFixed(1);
   return [
     {
       delay: 0,
-      message: { id: 's1', from: 'Oracle Stream', to: 'Alpha Scout', type: 'task_response', payload: { feed: 'SOL/USDC', price: p.price, rsi: p.rsi, macd: 'bullish_cross' }, timestamp: '' },
-      log: `Oracle Stream → Alpha Scout: Price feed update (SOL $${p.price}, RSI ${p.rsi})`,
+      message: { id: 's1', from: 'Oracle Stream', to: 'Alpha Scout', type: 'task_response', payload: { feed: `${tkn}/USDC`, price: p.price, rsi: p.rsi, macd: 'bullish_cross' }, timestamp: '' },
+      log: `Oracle Stream → Alpha Scout: Price feed update (${tkn} $${p.price}, RSI ${p.rsi})`,
       reasoning: { agentName: 'Oracle Stream', agentColor: '#8b5cf6', thoughts: [
         'Pulling latest price data from Jupiter aggregator...',
-        `SOL/USDC = $${p.price}, 24h change +${p.change}%`,
+        `${tkn}/USDC = $${p.price}, 24h change +${p.change}%`,
         `Computing RSI(14): ${p.rsi} — oversold territory`,
         'MACD histogram flipped positive — bullish crossover confirmed',
         'Broadcasting feed update to subscribed agents via A2A',
@@ -67,13 +71,13 @@ function buildScenarioScript(realPrice?: number): ScenarioStep[] {
         `RSI ${p.rsi} < 30 threshold → oversold signal active`,
         'MACD bullish crossover confirmed → momentum shifting up',
         `Combined signal confidence: ${confPct}% — exceeds 80% threshold`,
-        `Decision: Generate BUY signal for ${p.positionSize} SOL. Routing to risk check first.`,
+        `Decision: Generate ${act} signal for ${p.positionSize} ${tkn}. Routing to risk check first.`,
       ]},
     },
     {
       delay: 3500,
-      message: { id: 's3', from: 'Alpha Scout', to: 'Sentinel Guard', type: 'task_request', payload: { action: 'risk_check', token: 'SOL', proposedAction: `BUY ${p.positionSize} SOL` }, timestamp: '' },
-      log: `Alpha Scout → Sentinel Guard: Risk check request (BUY ${p.positionSize} SOL)`,
+      message: { id: 's3', from: 'Alpha Scout', to: 'Sentinel Guard', type: 'task_request', payload: { action: 'risk_check', token: tkn, proposedAction: `${act} ${p.positionSize} ${tkn}` }, timestamp: '' },
+      log: `Alpha Scout → Sentinel Guard: Risk check request (${act} ${p.positionSize} ${tkn})`,
     },
     {
       delay: 5000,
@@ -81,24 +85,24 @@ function buildScenarioScript(realPrice?: number): ScenarioStep[] {
       log: `Sentinel Guard → Alpha Scout: Risk approved (exposure ${p.exposure}% < 40% limit)`,
       reasoning: { agentName: 'Sentinel Guard', agentColor: '#ef4444', thoughts: [
         'Incoming risk check from Alpha Scout via A2A task_request',
-        `Checking portfolio exposure: SOL current weight = ${p.exposure}%`,
-        `After proposed trade: SOL weight → ~${newExposure}% (< 40% hard limit)`,
+        `Checking portfolio exposure: ${tkn} current weight = ${p.exposure}%`,
+        `After proposed trade: ${tkn} weight → ~${newExposure}% (< 40% hard limit)`,
         'No anomalous on-chain activity detected in last 24h',
         'APPROVED — risk level remains MEDIUM. Forwarding clearance.',
       ]},
     },
     {
       delay: 7000,
-      message: { id: 's5', from: 'Alpha Scout', to: 'Swift Trader', type: 'task_request', payload: { action: 'execute_swap', pair: 'SOL/USDC', side: 'buy', amount: p.positionSize, confidence: p.confidence, maxSlippage: 0.5 }, timestamp: '' },
-      log: `Alpha Scout → Swift Trader: Execute BUY ${p.positionSize} SOL (confidence ${confPct}%)`,
+      message: { id: 's5', from: 'Alpha Scout', to: 'Swift Trader', type: 'task_request', payload: { action: 'execute_swap', pair: `${tkn}/USDC`, side: act.toLowerCase(), amount: p.positionSize, confidence: p.confidence, maxSlippage: 0.5 }, timestamp: '' },
+      log: `Alpha Scout → Swift Trader: Execute ${act} ${p.positionSize} ${tkn} (confidence ${confPct}%)`,
     },
     {
       delay: 8500,
-      message: { id: 's6', from: 'Swift Trader', to: 'Swift Trader', type: 'discovery', payload: { routing: 'Jupiter aggregator', route: 'USDC→SOL via Raydium' }, timestamp: '' },
+      message: { id: 's6', from: 'Swift Trader', to: 'Swift Trader', type: 'discovery', payload: { routing: 'Jupiter aggregator', route: `USDC→${tkn} via Raydium` }, timestamp: '' },
       log: 'Swift Trader: Routing via Jupiter aggregator...',
       reasoning: { agentName: 'Swift Trader', agentColor: '#22c55e', thoughts: [
         'Received execute_swap from Alpha Scout — risk pre-approved',
-        'Querying Jupiter for best route: USDC → SOL',
+        `Querying Jupiter for best route: USDC → ${tkn}`,
         `Best route: Raydium pool, estimated price $${p.filledPrice}, slippage ${p.slippage}%`,
         'Signing transaction via Executive delegation → Asset Signer PDA',
         'Transaction submitted: 4Kz...7mN — awaiting confirmation...',
@@ -111,15 +115,15 @@ function buildScenarioScript(realPrice?: number): ScenarioStep[] {
     },
     {
       delay: 11500,
-      message: { id: 's8', from: 'Swift Trader', to: 'Sentinel Guard', type: 'task_request', payload: { update: 'portfolio_change', token: 'SOL', delta: `+${p.positionSize}`, newExposure: `${newExposure}%` }, timestamp: '' },
-      log: `Swift Trader → Sentinel Guard: Portfolio update (SOL → ${newExposure}%)`,
+      message: { id: 's8', from: 'Swift Trader', to: 'Sentinel Guard', type: 'task_request', payload: { update: 'portfolio_change', token: tkn, delta: `+${p.positionSize}`, newExposure: `${newExposure}%` }, timestamp: '' },
+      log: `Swift Trader → Sentinel Guard: Portfolio update (${tkn} → ${newExposure}%)`,
     },
     {
       delay: 13000,
       message: { id: 's9', from: 'Sentinel Guard', to: 'Swift Trader', type: 'task_response', payload: { acknowledged: true, newRiskLevel: 'medium' }, timestamp: '' },
       log: 'Sentinel Guard: Acknowledged. Risk level: MEDIUM',
       reasoning: { agentName: 'Sentinel Guard', agentColor: '#ef4444', thoughts: [
-        `Portfolio updated: SOL exposure ${newExposure}%`,
+        `Portfolio updated: ${tkn} exposure ${newExposure}%`,
         'Risk level re-assessed: MEDIUM (no change)',
         'All positions within configured limits. Monitoring continues.',
       ]},
@@ -179,6 +183,9 @@ export default function OrchestratePage() {
   const [jupiterRoute, setJupiterRoute] = useState<string | null>(null);
   const [a2aReady, setA2aReady] = useState(false);
   const [a2aTaskIds, setA2aTaskIds] = useState<string[]>([]);
+  const [customToken, setCustomToken] = useState('SOL');
+  const [customAction, setCustomAction] = useState<'BUY' | 'SELL'>('BUY');
+  const [customSize, setCustomSize] = useState(1.5);
 
   const submitMemoTx = async () => {
     if (!verificationDigest || !publicKey) return;
@@ -214,20 +221,22 @@ export default function OrchestratePage() {
   const startScenario = async () => {
     let realPrice: number | undefined;
     try {
-      const prices = await getJupiterPrices(['SOL']);
-      if (prices.SOL) {
-        realPrice = prices.SOL;
+      const prices = await getJupiterPrices([customToken]);
+      if (prices[customToken]) {
+        realPrice = prices[customToken];
       }
     } catch {
       // Fall back to random price
     }
     try {
-      const quote = await getJupiterQuote({ inputSymbol: 'USDC', outputSymbol: 'SOL', amount: 280_000_000 }); // 280 USDC in micro-units
+      const quoteInput = customAction === 'BUY' ? 'USDC' : customToken;
+      const quoteOutput = customAction === 'BUY' ? customToken : 'USDC';
+      const quote = await getJupiterQuote({ inputSymbol: quoteInput, outputSymbol: quoteOutput, amount: 280_000_000 }); // 280 USDC in micro-units
       if (quote) {
-        setJupiterRoute(formatQuoteSummary(quote, 'USDC', 'SOL'));
+        setJupiterRoute(formatQuoteSummary(quote, quoteInput, quoteOutput));
       }
     } catch {}
-    scriptRef.current = buildScenarioScript(realPrice);
+    scriptRef.current = buildScenarioScript(realPrice, customToken, customAction, customSize);
     setRunning(true);
     setStarted(true);
     setCompleted(false);
@@ -369,6 +378,31 @@ export default function OrchestratePage() {
 
         {/* Start Orchestration Button */}
         <div className="flex flex-col items-center gap-3 mb-6">
+          {/* Custom Scenario Config */}
+          {!running && (
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-mono text-[#6b7280]">TOKEN</label>
+                <select value={customToken} onChange={e => setCustomToken(e.target.value)}
+                  className="px-2 py-1.5 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-xs text-white font-mono focus:outline-none focus:border-[#00f0ff]/50">
+                  {['SOL', 'JUP', 'BONK', 'WIF', 'RAY'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-mono text-[#6b7280]">ACTION</label>
+                <select value={customAction} onChange={e => setCustomAction(e.target.value as 'BUY' | 'SELL')}
+                  className="px-2 py-1.5 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-xs text-white font-mono focus:outline-none focus:border-[#00f0ff]/50">
+                  <option value="BUY">BUY</option>
+                  <option value="SELL">SELL</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-mono text-[#6b7280]">SIZE</label>
+                <input type="number" value={customSize} onChange={e => setCustomSize(+e.target.value || 1)} step={0.1} min={0.1} max={100}
+                  className="w-20 px-2 py-1.5 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-xs text-white font-mono focus:outline-none focus:border-[#00f0ff]/50" />
+              </div>
+            </div>
+          )}
           {!started && !running && (
             <p className="text-[#6b7280] text-sm">{t('orch.clickToWatch')}</p>
           )}
@@ -476,6 +510,29 @@ export default function OrchestratePage() {
 
         {tab === 'tasks' && (
           <div className="space-y-3">
+            {/* User-registered agents */}
+            {store.agents.length > 12 && (
+              <div className="mb-4 rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/5 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+                  <span className="text-xs font-mono font-semibold text-[#22c55e]">Your Registered Agents</span>
+                </div>
+                <div className="space-y-2">
+                  {store.agents.slice(12).map((agent, i) => (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e]">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#22c55e]/20 to-[#00f0ff]/20 flex items-center justify-center text-sm">
+                        🤖
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-white">{agent.metadata.name}</div>
+                        <div className="text-[10px] font-mono text-[#6b7280]">{agent.assetPublicKey}</div>
+                      </div>
+                      <div className="text-[10px] px-2 py-0.5 rounded-full bg-[#22c55e]/10 text-[#22c55e]">registered</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {DEMO_TASKS.map(task => (
               <TaskRow key={task.id} task={task} />
             ))}
