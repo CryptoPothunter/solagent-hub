@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeFlowDigest, parseMemoPayload } from '../verification';
+import { computeFlowDigest, parseMemoPayload, buildMemoInstruction } from '../verification';
+import { PublicKey } from '@solana/web3.js';
 
 describe('computeFlowDigest', () => {
   it('should compute deterministic SHA-256 digest for a message set', async () => {
@@ -71,5 +72,58 @@ describe('parseMemoPayload', () => {
 
   it('should return null for wrong prefix', () => {
     expect(parseMemoPayload('OTHER:v1:flow:hash')).toBeNull();
+  });
+});
+
+describe('buildMemoInstruction', () => {
+  it('should create instruction with correct program ID', () => {
+    const signer = new PublicKey('11111111111111111111111111111111');
+    const ix = buildMemoInstruction('SAOP:v1:test:abc123', signer);
+    expect(ix.programId.toBase58()).toBe('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+    expect(ix.keys).toHaveLength(1);
+    expect(ix.keys[0].isSigner).toBe(true);
+  });
+
+  it('should encode memo payload as UTF-8 data', () => {
+    const signer = new PublicKey('11111111111111111111111111111111');
+    const payload = 'SAOP:v1:flow123:deadbeef';
+    const ix = buildMemoInstruction(payload, signer);
+    expect(Buffer.from(ix.data).toString('utf-8')).toBe(payload);
+  });
+});
+
+describe('computeFlowDigest - edge cases', () => {
+  it('should handle messages with complex nested payloads', async () => {
+    const messages = [
+      { from: 'A', to: 'B', type: 'task_request', payload: { nested: { deep: [1, 2, 3] } }, timestamp: '2025-01-01T00:00:00Z' },
+    ];
+    const digest = await computeFlowDigest('nested-test', messages);
+    expect(digest.sha256Hex).toMatch(/^[0-9a-f]{64}$/);
+    expect(digest.messageCount).toBe(1);
+  });
+
+  it('should handle single message flow', async () => {
+    const messages = [
+      { from: 'X', to: 'Y', type: 'heartbeat', payload: {}, timestamp: '2025-06-15T12:00:00Z' },
+    ];
+    const digest = await computeFlowDigest('single-msg', messages);
+    expect(digest.sha256Hex).toMatch(/^[0-9a-f]{64}$/);
+    expect(digest.memoPayload).toContain('SAOP:v1:single-msg:');
+  });
+
+  it('should produce different digests for different payloads', async () => {
+    const msg1 = [{ from: 'A', to: 'B', type: 'task_request', payload: { action: 'buy' }, timestamp: '2025-01-01T00:00:00Z' }];
+    const msg2 = [{ from: 'A', to: 'B', type: 'task_request', payload: { action: 'sell' }, timestamp: '2025-01-01T00:00:00Z' }];
+    const d1 = await computeFlowDigest('diff-test', msg1);
+    const d2 = await computeFlowDigest('diff-test', msg2);
+    expect(d1.sha256Hex).not.toBe(d2.sha256Hex);
+  });
+});
+
+describe('parseMemoPayload - edge cases', () => {
+  it('should handle memo with extra colons in sha256', () => {
+    // sha256 shouldn't have colons, but test robustness
+    const result = parseMemoPayload('SAOP:v1:flow:hash:extra');
+    expect(result).toBeNull(); // 5 parts instead of 4
   });
 });

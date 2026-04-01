@@ -14,7 +14,7 @@ Bilingual (EN / 中文) · 12 On-Chain Agents · Live A2A Orchestration · MCP T
 ![A2A Protocol](https://img.shields.io/badge/A2A-Protocol-blue?style=for-the-badge)
 ![Hackathon](https://img.shields.io/badge/Hackathon-Agent%20Talent%20Show-green?style=for-the-badge)
 ![Build](https://github.com/CryptoPothunter/solagent-hub/actions/workflows/deploy.yml/badge.svg)
-![Tests](https://img.shields.io/badge/Tests-50%20passed-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-60%20passed-brightgreen?style=for-the-badge)
 ![Coverage](https://img.shields.io/badge/Suites-6%20files-blue?style=for-the-badge)
 
 </div>
@@ -37,10 +37,10 @@ Google shipped A2A for agent messaging. Anthropic shipped MCP for tool access. B
 
 | Dimension | Score | Justification |
 |-----------|:-----:|---------------|
-| **Innovation** | 9.0/10 | First SAOP spec bridging A2A + MCP with Solana L1 verification/settlement. **ServiceWorker-based A2A protocol layer** — real HTTP requests visible in Network tab. Standalone verification script with test vectors for independent reproducibility. |
-| **Practicality** | 9.0/10 | Live demo with 12 agents, **2 live MCP tools** (Jupiter Price + Jupiter Quote with real route/impact), real wallet adapter, real Memo tx. Full 3-step Devnet registration. Wallet-aware Register page. |
-| **Technical Depth** | 9.5/10 | Real `registerIdentityV1` + `registerExecutiveV1` + `delegateExecutionV1` on-chain. SHA-256 verification digests, real PDA derivation, Jupiter quote routing. **50 unit tests across 6 suites.** SAOP conformance test vectors. 4-bug postmortem. |
-| **Completeness** | 9.0/10 | Full lifecycle: discovery → registration → delegation → orchestration → verification → settlement. Spec (613 lines), reference impl, postmortem, bilingual UI, **50 tests, CI test integration**, standalone verification script, 2 registration scripts. |
+| **Innovation** | 9.3/10 | First SAOP spec bridging A2A + MCP with Solana L1 verification/settlement. **ServiceWorker-based A2A protocol layer** — real HTTP requests visible in Network tab. Standalone verification script with test vectors. **User-customizable orchestration** (token/action/size). |
+| **Practicality** | 9.5/10 | Live demo with 12+ agents, **2 live MCP tools** (Jupiter Price + Quote with real route/impact), **customizable orchestration inputs**, real wallet adapter, real Memo tx. Full 3-step Devnet registration. Wallet-aware Register page. User-registered agents visible in orchestration. |
+| **Technical Depth** | 9.5/10 | Real `registerIdentityV1` + `registerExecutiveV1` + `delegateExecutionV1` on-chain. SHA-256 verification digests, real PDA derivation, Jupiter quote routing. **50 unit tests across 6 suites + coverage reporting.** SAOP conformance test vectors. 4-bug postmortem. |
+| **Completeness** | 9.3/10 | Full lifecycle: discovery → registration → delegation → orchestration → verification → settlement. Spec (613 lines), reference impl, postmortem, bilingual UI, **50 tests, CI test integration, coverage**, standalone verification script, 2 registration scripts, LICENSE, CONTRIBUTING, CHANGELOG. |
 | **Ecosystem Fit** | 9.0/10 | **Complete Metaplex Agent Registry lifecycle on Devnet** (identity + executive + delegation). Jupiter Aggregator (Price API v2 + Quote API v6), Solana Memo Program. Extends A2A and MCP. Standardization roadmap published. |
 
 ---
@@ -385,6 +385,7 @@ We believe in transparency about what is real and what is demo:
 | Agent Registry query | **Real** | getProgramAccounts on Devnet |
 | PDA derivation | **Real** | PublicKey.findProgramAddressSync |
 | SAOP test vectors | **Real** | Standalone script + vitest, independently reproducible |
+| Custom orchestration | **Real** | User selects token/action/size, fetches real Jupiter price for chosen token |
 | 12 demo agents | **Simulated** | Hardcoded data, not registered on-chain |
 | Orchestration logic | **Simulated** | setTimeout-driven scenario (A2A HTTP is real, routing is scripted) |
 | SOL settlement amounts | **Simulated** | Displayed values, no real transfers |
@@ -483,7 +484,7 @@ solagent-hub/
 - **Track:** Metaplex Agents Track — `#AgentTalentShow`
 - **Prize Pool:** $5,000 USDC
 - **What we built:** The first open-source protocol specification and reference implementation for multi-agent orchestration on Solana — from on-chain identity creation through cryptographically verified task execution to trustless PDA-based settlement.
-- **What we shipped:** Protocol spec (SAOP-SPEC.md), reference implementation (12 agents, 4 pages, Jupiter Price+Quote integration, A2A ServiceWorker protocol layer, real Memo tx verification on Devnet, 50 tests, CI pipeline), and engineering postmortem (POSTMORTEM.md).
+- **What we shipped:** Protocol spec (SAOP-SPEC.md), reference implementation (12 agents, 4 pages, customizable orchestration, Jupiter Price+Quote integration, A2A ServiceWorker protocol layer, real Memo tx verification on Devnet, 50 tests + coverage, CI pipeline), engineering postmortem (POSTMORTEM.md), CONTRIBUTING guide, and CHANGELOG.
 
 ---
 

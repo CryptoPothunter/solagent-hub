@@ -186,6 +186,7 @@ export default function OrchestratePage() {
   const [customToken, setCustomToken] = useState('SOL');
   const [customAction, setCustomAction] = useState<'BUY' | 'SELL'>('BUY');
   const [customSize, setCustomSize] = useState(1.5);
+  const [flowHistory, setFlowHistory] = useState<Array<{token: string; action: string; size: number; digest: string; timestamp: string; messageCount: number}>>([]);
 
   const submitMemoTx = async () => {
     if (!verificationDigest || !publicKey) return;
@@ -216,6 +217,13 @@ export default function OrchestratePage() {
 
   useEffect(() => {
     registerA2AWorker().then(ok => setA2aReady(ok));
+  }, []);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('solagent-flow-history');
+      if (stored) setFlowHistory(JSON.parse(stored));
+    } catch {}
   }, []);
 
   const startScenario = async () => {
@@ -276,6 +284,13 @@ export default function OrchestratePage() {
         }));
         computeFlowDigest(flowId, digestMessages).then(digest => {
           setVerificationDigest(digest);
+          // Persist to flow history
+          const entry = { token: customToken, action: customAction, size: customSize, digest: digest.sha256Hex.slice(0, 16), timestamp: new Date().toISOString(), messageCount: digest.messageCount };
+          setFlowHistory(prev => {
+            const updated = [entry, ...prev].slice(0, 10); // Keep last 10
+            try { localStorage.setItem('solagent-flow-history', JSON.stringify(updated)); } catch {}
+            return updated;
+          });
         }).catch(() => {});
       }
       return;
@@ -382,14 +397,14 @@ export default function OrchestratePage() {
           {!running && (
             <div className="flex flex-wrap items-center gap-3 mb-2">
               <div className="flex items-center gap-2">
-                <label className="text-[10px] font-mono text-[#6b7280]">TOKEN</label>
+                <label className="text-[10px] font-mono text-[#6b7280]">{t('orch.config.token')}</label>
                 <select value={customToken} onChange={e => setCustomToken(e.target.value)}
                   className="px-2 py-1.5 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-xs text-white font-mono focus:outline-none focus:border-[#00f0ff]/50">
                   {['SOL', 'JUP', 'BONK', 'WIF', 'RAY'].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-[10px] font-mono text-[#6b7280]">ACTION</label>
+                <label className="text-[10px] font-mono text-[#6b7280]">{t('orch.config.action')}</label>
                 <select value={customAction} onChange={e => setCustomAction(e.target.value as 'BUY' | 'SELL')}
                   className="px-2 py-1.5 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-xs text-white font-mono focus:outline-none focus:border-[#00f0ff]/50">
                   <option value="BUY">BUY</option>
@@ -397,7 +412,7 @@ export default function OrchestratePage() {
                 </select>
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-[10px] font-mono text-[#6b7280]">SIZE</label>
+                <label className="text-[10px] font-mono text-[#6b7280]">{t('orch.config.size')}</label>
                 <input type="number" value={customSize} onChange={e => setCustomSize(+e.target.value || 1)} step={0.1} min={0.1} max={100}
                   className="w-20 px-2 py-1.5 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-xs text-white font-mono focus:outline-none focus:border-[#00f0ff]/50" />
               </div>
@@ -515,7 +530,7 @@ export default function OrchestratePage() {
               <div className="mb-4 rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/5 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-                  <span className="text-xs font-mono font-semibold text-[#22c55e]">Your Registered Agents</span>
+                  <span className="text-xs font-mono font-semibold text-[#22c55e]">{t('orch.registeredAgents')}</span>
                 </div>
                 <div className="space-y-2">
                   {store.agents.slice(12).map((agent, i) => (
@@ -527,7 +542,27 @@ export default function OrchestratePage() {
                         <div className="text-sm font-semibold text-white">{agent.metadata.name}</div>
                         <div className="text-[10px] font-mono text-[#6b7280]">{agent.assetPublicKey}</div>
                       </div>
-                      <div className="text-[10px] px-2 py-0.5 rounded-full bg-[#22c55e]/10 text-[#22c55e]">registered</div>
+                      <div className="text-[10px] px-2 py-0.5 rounded-full bg-[#22c55e]/10 text-[#22c55e]">{t('orch.registered')}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Flow History */}
+            {flowHistory.length > 0 && (
+              <div className="mb-4 rounded-xl border border-[#8b5cf6]/30 bg-[#8b5cf6]/5 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#8b5cf6]" />
+                  <span className="text-xs font-mono font-semibold text-[#8b5cf6]">{t('orch.flowHistory') || 'Flow History'}</span>
+                  <span className="text-[10px] font-mono text-[#6b7280] ml-auto">{flowHistory.length} flows</span>
+                </div>
+                <div className="space-y-1.5">
+                  {flowHistory.map((flow, i) => (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#0a0b0f] border border-[#2a2d3e] text-xs font-mono">
+                      <span className="text-[#00f0ff]">{flow.action} {flow.size} {flow.token}</span>
+                      <span className="text-[#6b7280]">{flow.messageCount} msgs</span>
+                      <span className="text-[#8b5cf6] truncate">{flow.digest}...</span>
+                      <span className="text-[#6b7280] ml-auto">{flow.timestamp.slice(11, 19)}</span>
                     </div>
                   ))}
                 </div>

@@ -192,6 +192,11 @@ const translations: Translations = {
   'orch.verify.onChainNote': { en: 'Memo data is now permanently recorded on Solana Devnet. Anyone can independently verify the orchestration flow.', zh: 'Memo 数据已永久记录在 Solana Devnet 上。任何人都可以独立验证编排流程。' },
   'orch.verify.retry': { en: 'Retry', zh: '重试' },
   'orch.jupiter.route': { en: 'Jupiter Route', zh: 'Jupiter 路由' },
+  'orch.config.token': { en: 'TOKEN', zh: '代币' },
+  'orch.config.action': { en: 'ACTION', zh: '操作' },
+  'orch.config.size': { en: 'SIZE', zh: '数量' },
+  'orch.registeredAgents': { en: 'Your Registered Agents', zh: '你注册的 Agent' },
+  'orch.registered': { en: 'registered', zh: '已注册' },
 
   // --- Tools page ---
   'tools.title': { en: 'MCP Tools Explorer', zh: 'MCP 工具浏览器' },

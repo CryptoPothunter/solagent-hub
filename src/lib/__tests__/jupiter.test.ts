@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TOKEN_MINTS, formatQuoteSummary } from '../jupiter';
+import { TOKEN_MINTS, formatQuoteSummary, getJupiterPrices, getJupiterQuote } from '../jupiter';
 import type { JupiterQuote } from '../jupiter';
 
 describe('TOKEN_MINTS', () => {
@@ -94,5 +94,29 @@ describe('formatQuoteSummary', () => {
     expect(result).toContain('Orca');
     expect(result).toContain('BONK');
     expect(result).toContain('SOL');
+  });
+});
+
+describe('getJupiterPrices', () => {
+  it('should return empty object for empty symbols array', async () => {
+    const result = await getJupiterPrices([]);
+    expect(result).toEqual({});
+  });
+
+  it('should return empty object for unknown symbols', async () => {
+    const result = await getJupiterPrices(['UNKNOWN_TOKEN_XYZ']);
+    expect(result).toEqual({});
+  });
+});
+
+describe('getJupiterQuote', () => {
+  it('should return null for unknown input symbol', async () => {
+    const result = await getJupiterQuote({ inputSymbol: 'FAKE', outputSymbol: 'SOL', amount: 1000 });
+    expect(result).toBeNull();
+  });
+
+  it('should return null for unknown output symbol', async () => {
+    const result = await getJupiterQuote({ inputSymbol: 'SOL', outputSymbol: 'FAKE', amount: 1000 });
+    expect(result).toBeNull();
   });
 });
